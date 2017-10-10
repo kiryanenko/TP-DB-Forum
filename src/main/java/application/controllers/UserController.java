@@ -23,13 +23,14 @@ public class UserController {
 
 
     @PostMapping(path = "/create", consumes = "application/json", produces = "application/json")
-    public ResponseEntity create(@RequestBody User user, @PathVariable String nickname) {
+    public ResponseEntity create(@RequestBody User body, @PathVariable String nickname) {
         System.out.println("creat");
-        user.setNickname(nickname);
-        if (!userService.create(user)) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(userService.findSameUser(user));
+        body.setNickname(nickname);
+        final User createdUser = userService.create(body);
+        if (createdUser == null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(userService.findSameUsers(body));
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("Successfully registered user"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
 
 
