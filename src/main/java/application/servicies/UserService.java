@@ -33,6 +33,7 @@ public class UserService {
     );
 
 
+    // Создание нового пользователя в базе данных.
     public @Nullable User create(User credentials) {
         final GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         final MapSqlParameterSource params = new MapSqlParameterSource();
@@ -41,12 +42,13 @@ public class UserService {
         params.addValue("email", credentials.getEmail());
         params.addValue("about", credentials.getAbout());
         try {
-            template.update("insert into person(nickname, fullname, email, about)"
-                    + " values(:nickname,:fullname,:email,:about) returning id", params, keyHolder);
+            template.update("INSERT INTO person(nickname, fullname, email, about)"
+                    + " VALUES (:nickname,:fullname,:email,:about) RETURNING id", params, keyHolder);
         } catch (DataAccessException e) {
             e.printStackTrace();
             return null;
         }
+        // Пользователь успешно создан. Возвращает данные созданного пользователя.
         return new User(keyHolder.getKey().longValue(),
                         credentials.getNickname(),
                         credentials.getFullname(),
@@ -60,6 +62,18 @@ public class UserService {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("nickname", credentials.getNickname());
         params.addValue("email", credentials.getEmail());
-        return template.query("select * from person where nickname=:nickname OR email=:email", params, USER_MAPPER);
+        return template.query("SELECT * FROM person WHERE nickname=:nickname OR email=:email", params, USER_MAPPER);
+    }
+
+
+    // Получение информации о пользователе форума по его имени.
+    public @Nullable User findUserByNickname(String nickname) {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("nickname", nickname);
+        final List<User> res = template.query("SELECT * FROM person WHERE nickname=:nickname LIMIT 1", params, USER_MAPPER);
+        if (res.isEmpty()) {
+            return null;
+        }
+        return res.get(0);
     }
 }
