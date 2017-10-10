@@ -1,6 +1,7 @@
 package application.servicies;
 
 import application.models.User;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -32,7 +33,7 @@ public class UserService {
     );
 
 
-    public Boolean create(User credentials) {
+    public @Nullable User create(User credentials) {
         final GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("nickname", credentials.getNickname());
@@ -41,17 +42,21 @@ public class UserService {
         params.addValue("about", credentials.getAbout());
         try {
             template.update("insert into person(nickname, fullname, email, about)"
-                    + " values(:nickname,:fullname,:email,:about)", params, keyHolder);
+                    + " values(:nickname,:fullname,:email,:about) returning id", params, keyHolder);
         } catch (DataAccessException e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
-        return true;
+        return new User(keyHolder.getKey().longValue(),
+                        credentials.getNickname(),
+                        credentials.getFullname(),
+                        credentials.getEmail(),
+                        credentials.getAbout());
     }
 
 
     // Поиск пользователя с таким же nickname или email
-    public List<User> findSameUser(User credentials) {
+    public List<User> findSameUsers(User credentials) {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("nickname", credentials.getNickname());
         params.addValue("email", credentials.getEmail());
