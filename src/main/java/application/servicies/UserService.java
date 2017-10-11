@@ -67,15 +67,11 @@ public class UserService {
 
 
     // Получение информации о пользователе форума по его имени.
-    public @Nullable User findUserByNickname(String nickname) {
+    public User findUserByNickname(String nickname) throws IndexOutOfBoundsException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("nickname", nickname);
         final List<User> res = template.query("SELECT * FROM person WHERE nickname=:nickname LIMIT 1", params, USER_MAPPER);
-        if (res.isEmpty()) {
-            // Пользователь отсутсвует в системе.
-            return null;
-        }
-        return res.get(0);
+        return res.get(0);  // Может выпасть IndexOutOfBoundsException - пользователь не найден
     }
 
 
@@ -90,6 +86,6 @@ public class UserService {
                 + " WHERE nickname=:nickname RETURNING *", params, USER_MAPPER);
 
         // Пользователь успешно создан. Возвращает данные созданного пользователя.
-        return res.get(0);
+        return res.get(0);  // Может выпасть IndexOutOfBoundsException - пользователь не найден
     }
 }
