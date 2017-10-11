@@ -59,6 +59,7 @@ public class ForumService {
     }
 
 
+    // Получение информации о форуме по его идентификаторе.
     public Forum findForumBySlug(String slug) throws IndexOutOfBoundsException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("slug", slug);

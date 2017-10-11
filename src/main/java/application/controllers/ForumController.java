@@ -37,6 +37,20 @@ public class ForumController {
         } catch (DataAccessException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(forumService.findForumBySlug(body.getSlug()));
         }
+    }
 
+
+    // Получение информации о форуме по его идентификаторе.
+    @GetMapping(path = "/{slug}/details", consumes = "application/json", produces = "application/json")
+    public ResponseEntity details(@PathVariable String slug) {
+        try {
+            final Forum forum = forumService.findForumBySlug(slug);
+            return ResponseEntity.ok(forum);
+        } catch (IndexOutOfBoundsException e) {
+            // Форум отсутсвует в системе.
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new MessageResponse("Can't find forum with slug " + slug)
+            );
+        }
     }
 }
