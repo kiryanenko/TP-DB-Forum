@@ -4,6 +4,7 @@ import application.models.User;
 import application.servicies.UserService;
 import application.views.MessageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,14 +43,24 @@ public class UserController {
     public ResponseEntity profile(@PathVariable String nickname) {
         final User user = userService.findUserByNickname(nickname);
         if (user == null) {
+            // Пользователь отсутсвует в системе.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find user with nickname " + nickname));
         }
+        // Информация о пользователе.
         return ResponseEntity.ok(user);
     }
 
 
     @PostMapping(path = "/profile", consumes = "application/json", produces = "application/json")
     public ResponseEntity edit(@RequestBody User body, @PathVariable String nickname) {
-        return ResponseEntity.ok(new MessageResponse("Edit complite."));
+        body.setNickname(nickname);
+        try {
+            final User updatedUser = userService.update(body);
+            return ResponseEntity.ok(updatedUser);
+        } catch (DataAccessException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new MessageResponse("Новые данные профиля пользователя конфликтуют с имеющимися пользователями."));
+        } catch (IndexOutOfBoundsException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find user with nickname " + nickname));
+        }
     }
 }

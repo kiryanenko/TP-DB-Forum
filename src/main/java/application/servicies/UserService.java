@@ -72,8 +72,24 @@ public class UserService {
         params.addValue("nickname", nickname);
         final List<User> res = template.query("SELECT * FROM person WHERE nickname=:nickname LIMIT 1", params, USER_MAPPER);
         if (res.isEmpty()) {
+            // Пользователь отсутсвует в системе.
             return null;
         }
+        return res.get(0);
+    }
+
+
+    // Изменение информации в профиле пользователя.
+    public User update(User credentials) throws DataAccessException, IndexOutOfBoundsException {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("nickname", credentials.getNickname());
+        params.addValue("fullname", credentials.getFullname());
+        params.addValue("email", credentials.getEmail());
+        params.addValue("about", credentials.getAbout());
+        final List<User> res = template.query("UPDATE person SET fullname=:fullname, email=:email, about=:about"
+                + " WHERE nickname=:nickname RETURNING *", params, USER_MAPPER);
+
+        // Пользователь успешно создан. Возвращает данные созданного пользователя.
         return res.get(0);
     }
 }
