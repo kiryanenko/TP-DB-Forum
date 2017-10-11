@@ -41,13 +41,13 @@ public class UserController {
     // Получение информации о пользователе форума по его имени.
     @GetMapping(path = "/profile", produces = "application/json")
     public ResponseEntity profile(@PathVariable String nickname) {
-        final User user = userService.findUserByNickname(nickname);
-        if (user == null) {
+        try {
+            final User user = userService.findUserByNickname(nickname);
+            return ResponseEntity.ok(user);
+        }catch (IndexOutOfBoundsException e){
             // Пользователь отсутсвует в системе.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find user with nickname " + nickname));
         }
-        // Информация о пользователе.
-        return ResponseEntity.ok(user);
     }
 
 
