@@ -9,6 +9,10 @@ CREATE TABLE person (
   about TEXT
 );
 
+CREATE INDEX idx_person_id ON person (id);
+CREATE INDEX idx_person_nickname ON person (nickname);
+CREATE INDEX idx_person_email ON person (email);
+
 
 CREATE TABLE forum (
   id SERIAL PRIMARY KEY,
@@ -18,3 +22,5 @@ CREATE TABLE forum (
   threads INTEGER DEFAULT 0,
   person_id bigint references person(id)
 );
+
+CREATE INDEX idx_forum_slug ON forum (slug);
