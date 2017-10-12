@@ -72,15 +72,37 @@ public class ThreadService {
     }
 
 
+    public Thread findThreadById(Long id) throws IndexOutOfBoundsException {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("id", id);
+        final List<Thread> res = template.query(
+                "SELECT T.id id, P.nickname author, author_id, created, F.slug forum, forum_id, message, T.slug slug, T.title title, votes " +
+                        "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
+                        "WHERE T.id=:id LIMIT 1", params, THREAD_MAPPER
+        );
+        return res.get(0);  // Может выпасть IndexOutOfBoundsException - ветвь не найдена
+    }
+
+
     public Thread findThreadBySlug(String slug) throws IndexOutOfBoundsException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("slug", slug);
         final List<Thread> res = template.query(
                 "SELECT T.id id, P.nickname author, author_id, created, F.slug forum, forum_id, message, T.slug slug, T.title title, votes " +
                         "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
-                        "WHERE slug=:slug LIMIT 1", params, THREAD_MAPPER
+                        "WHERE T.slug=:slug LIMIT 1", params, THREAD_MAPPER
         );
         return res.get(0);  // Может выпасть IndexOutOfBoundsException - ветвь не найдена
+    }
+
+
+    public Thread findThreadBySlugOrId(String slugOrId) throws IndexOutOfBoundsException {
+        try {
+            final Long id = Long.parseLong(slugOrId);
+            return findThreadById(id);
+        } catch (NumberFormatException e) {
+            return findThreadBySlug(slugOrId);
+        }
     }
 
 
