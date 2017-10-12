@@ -1,8 +1,9 @@
 package application.controllers;
 
+import application.models.Thread;
 import application.models.Forum;
-import application.models.User;
 import application.servicies.ForumService;
+import application.servicies.ThreadService;
 import application.views.MessageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -15,11 +16,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(path = "/forum")
 public class ForumController {
     private ForumService forumService;
+    private ThreadService threadService;
 
 
     @Autowired
-    public  ForumController(ForumService forumService) {
+    public  ForumController(ForumService forumService, ThreadService threadService) {
         this.forumService = forumService;
+        this.threadService = threadService;
     }
 
 
@@ -51,6 +54,23 @@ public class ForumController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     new MessageResponse("Can't find forum with slug " + slug)
             );
+        }
+    }
+
+
+    // Добавление новой ветки обсуждения на форум
+    @PostMapping(path = "/{slug}/create", consumes = "application/json", produces = "application/json")
+    public ResponseEntity createThread(@PathVariable String slug, @RequestBody Thread body) {
+        try {
+            body.setForum(slug);
+            final Thread createdThread = threadService.create(body);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdThread);
+        } catch (IndexOutOfBoundsException e) {
+            // Автор ветки или форум не найдены.
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find forum or author"));
+        } catch (DataAccessException e) {
+            // Ветка обсуждения уже присутсвует в базе данных. Возвращает данные ранее созданной ветки обсуждения.
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(threadService.findThreadBySlug(body.getSlug()));
         }
     }
 }

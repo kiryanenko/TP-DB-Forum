@@ -1,0 +1,85 @@
+package application.servicies;
+
+import application.models.Forum;
+import application.models.Thread;
+import application.models.User;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+
+@Service
+@Transactional
+public class ThreadService {
+    private final NamedParameterJdbcTemplate template;
+    private final UserService userService;
+    private final ForumService forumService;
+
+
+    public ThreadService(NamedParameterJdbcTemplate template, UserService userService, ForumService forumService) {
+        this.template = template;
+        this.userService = userService;
+        this.forumService = forumService;
+    }
+
+
+    private static final RowMapper<Thread> THREAD_MAPPER = (res, num) -> new Thread(
+            res.getLong("id"),
+            res.getString("author"),
+            res.getLong("author_id"),
+            res.getTimestamp("created"),
+            res.getString("forum"),
+            res.getLong("forum_id"),
+            res.getString("message"),
+            res.getString("slug"),
+            res.getString("title"),
+            res.getLong("votes")
+    );
+
+
+    // Добавление новой ветки обсуждения на форум
+    public Thread create(Thread body) throws IndexOutOfBoundsException, DataAccessException {
+        final User author = userService.findUserByNickname(body.getAuthor());
+        final Forum forum = forumService.findForumBySlug(body.getForum());
+
+        final GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("author_id", author.getId());
+        params.addValue("forum_id", forum.getId());
+        params.addValue("title", body.getTitle());
+        params.addValue("slug", body.getSlug());
+        params.addValue("created", body.getCreated());
+        params.addValue("message", body.getMessage());
+        template.update("INSERT INTO thread(author_id, forum_id, title, created, message, slug) " +
+                "VALUES (:author_id, :forum_id, :title, :created, :message, :slug) RETURNING id", params, keyHolder);
+        // Форум успешно создан. Возвращает данные созданного форума.
+        return new Thread(keyHolder.getKey().longValue(),
+                          body.getAuthor(),
+                          author.getId(),
+                          body.getCreated(),
+                          body.getForum(),
+                          forum.getId(),
+                          body.getMessage(),
+                          body.getSlug(),
+                          body.getTitle(),
+                          null);
+    }
+
+
+    public Thread findThreadBySlug(String slug) throws IndexOutOfBoundsException {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("slug", slug);
+        final List<Thread> res = template.query(
+                "SELECT T.id id, P.nickname author, author_id, created, F.slug forum, forum_id, message, T.slug slug, T.title title, votes " +
+                        "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
+                        "WHERE slug=:slug LIMIT 1", params, THREAD_MAPPER
+        );
+        return res.get(0);  // Может выпасть IndexOutOfBoundsException - ветвь не найдена
+    }
+}

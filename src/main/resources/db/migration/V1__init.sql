@@ -20,7 +20,23 @@ CREATE TABLE forum (
   slug TEXT NOT NULL UNIQUE,
   title TEXT NOT NULL,
   threads INTEGER DEFAULT 0,
-  person_id bigint references person(id)
+  person_id INTEGER REFERENCES person(id) NOT NULL
 );
 
+CREATE INDEX idx_forum_id ON forum (id);
 CREATE INDEX idx_forum_slug ON forum (slug);
+
+
+CREATE TABLE thread (
+  id SERIAL PRIMARY KEY,
+  author_id INTEGER REFERENCES person(id) NOT NULL,
+  forum_id INTEGER REFERENCES forum(id) NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  slug TEXT NULL UNIQUE,
+  votes INTEGER DEFAULT 0,
+  created TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_thread_id ON forum (id);
+CREATE INDEX idx_thread_slug ON thread (slug);
