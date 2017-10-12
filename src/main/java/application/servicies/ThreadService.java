@@ -45,8 +45,8 @@ public class ThreadService {
 
     // Добавление новой ветки обсуждения на форум
     public Thread create(Thread body) throws IndexOutOfBoundsException, DataAccessException {
-        final User author = userService.findUserByNickname(body.getAuthor());
-        final Forum forum = forumService.findForumBySlug(body.getForum());
+        final User author = userService.findUserByNickname(body.getAuthor());   // Может выпасть IndexOutOfBoundsException - автор не найден
+        final Forum forum = forumService.findForumBySlug(body.getForum());      // Может выпасть IndexOutOfBoundsException - форум не найден
 
         final GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         final MapSqlParameterSource params = new MapSqlParameterSource();
@@ -81,5 +81,21 @@ public class ThreadService {
                         "WHERE slug=:slug LIMIT 1", params, THREAD_MAPPER
         );
         return res.get(0);  // Может выпасть IndexOutOfBoundsException - ветвь не найдена
+    }
+
+
+    // Получение списка ветвей обсужления данного форума.
+    // Ветви обсуждения выводятся отсортированные по дате создания.
+    public List<Thread> forumThreads(String forumSlug) throws IndexOutOfBoundsException {
+        final Forum forum = forumService.findForumBySlug(forumSlug); // Может выпасть IndexOutOfBoundsException - форум не найден
+
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("slug", forumSlug);
+        final List<Thread> threads = template.query(
+                "SELECT T.id id, P.nickname author, author_id, created, F.slug forum, forum_id, message, T.slug slug, T.title title, votes " +
+                        "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
+                        "WHERE F.slug=:slug ORDER BY created", params, THREAD_MAPPER
+        );
+        return threads;
     }
 }

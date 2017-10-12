@@ -9,7 +9,6 @@ CREATE TABLE person (
   about TEXT
 );
 
-CREATE INDEX idx_person_id ON person (id);
 CREATE INDEX idx_person_nickname ON person (nickname);
 CREATE INDEX idx_person_email ON person (email);
 
@@ -23,7 +22,6 @@ CREATE TABLE forum (
   person_id INTEGER REFERENCES person(id) NOT NULL
 );
 
-CREATE INDEX idx_forum_id ON forum (id);
 CREATE INDEX idx_forum_slug ON forum (slug);
 
 
@@ -38,5 +36,5 @@ CREATE TABLE thread (
   created TIMESTAMP NOT NULL
 );
 
-CREATE INDEX idx_thread_id ON forum (id);
+CREATE INDEX idx_thread_forum ON thread (forum_id, created);
 CREATE INDEX idx_thread_slug ON thread (slug);

@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @CrossOrigin
 @RequestMapping(path = "/forum")
@@ -71,6 +73,19 @@ public class ForumController {
         } catch (DataAccessException e) {
             // Ветка обсуждения уже присутсвует в базе данных. Возвращает данные ранее созданной ветки обсуждения.
             return ResponseEntity.status(HttpStatus.CONFLICT).body(threadService.findThreadBySlug(body.getSlug()));
+        }
+    }
+
+
+    // Получение списка ветвей обсужления данного форума.
+    // Ветви обсуждения выводятся отсортированные по дате создания.
+    @GetMapping(path = "/{slug}/threads", consumes = "application/json", produces = "application/json")
+    public ResponseEntity forumThreads(@PathVariable String slug) {
+        try {
+            return ResponseEntity.ok(threadService.forumThreads(slug));
+        } catch (IndexOutOfBoundsException e) {
+            // Форум не найден.
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find forum " + slug));
         }
     }
 }
