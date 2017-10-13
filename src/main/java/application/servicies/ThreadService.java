@@ -79,22 +79,19 @@ public class ThreadService {
         params.addValue("title", body.getTitle());
         params.addValue("message", body.getMessage());
 
-        List<Thread> res;
+        String condition;
         try {
             params.addValue("id", Long.parseLong(slugOrId));
-            res = template.query(
-                    "UPDATE thread SET title = :title, message = :message " +
-                            "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
-                            "WHERE T.id = :id RETURNING *, nickname author, F.slug forum", params, THREAD_MAPPER
-            );
+            condition = "T.id = :id";
         } catch (NumberFormatException e) {
             params.addValue("slug", slugOrId);
-            res = template.query(
-                    "UPDATE thread SET title = :title, message = :message " +
-                            "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
-                            "WHERE T.slug = :slug RETURNING *, nickname author, F.slug forum", params, THREAD_MAPPER
-            );
+            condition = "T.slug = :slug";
         }
+        List<Thread> res = template.query(
+                "UPDATE thread SET title = :title, message = :message " +
+                        "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
+                        "WHERE "+ condition + " RETURNING *, nickname author, F.slug forum", params, THREAD_MAPPER
+        );
         return res.get(0);
     }
 
