@@ -72,7 +72,7 @@ public class UserService {
 
 
     // Изменение информации в профиле пользователя.
-    public User update(User credentials) throws DataAccessException, IndexOutOfBoundsException {
+    public User update(User credentials) throws DuplicateKeyException, IndexOutOfBoundsException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("nickname", credentials.getNickname());
         params.addValue("fullname", credentials.getFullname());

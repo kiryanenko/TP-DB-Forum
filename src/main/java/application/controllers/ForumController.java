@@ -6,7 +6,7 @@ import application.servicies.ForumService;
 import application.servicies.ThreadService;
 import application.views.MessageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +38,7 @@ public class ForumController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     new MessageResponse("Can't find user with nickname " + body.getUserNickname())
             );
-        } catch (DataAccessException e) {
+        } catch (DuplicateKeyException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(forumService.findForumBySlug(body.getSlug()));
         }
     }
@@ -69,7 +69,7 @@ public class ForumController {
         } catch (IndexOutOfBoundsException e) {
             // Автор ветки или форум не найдены.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find forum or author"));
-        } catch (DataAccessException e) {
+        } catch (DuplicateKeyException e) {
             // Ветка обсуждения уже присутсвует в базе данных. Возвращает данные ранее созданной ветки обсуждения.
             return ResponseEntity.status(HttpStatus.CONFLICT).body(threadService.findThreadBySlug(body.getSlug()));
         }

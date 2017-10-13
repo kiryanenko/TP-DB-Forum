@@ -3,7 +3,7 @@ package application.servicies;
 import application.models.Forum;
 import application.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -40,7 +40,7 @@ public class ForumService {
 
 
     // Создание нового форума.
-    public Forum create(Forum body) throws IndexOutOfBoundsException, DataAccessException {
+    public Forum create(Forum body) throws IndexOutOfBoundsException, DuplicateKeyException {
         final User user = userService.findUserByNickname(body.getUserNickname());   // Может выпасть IndexOutOfBoundsException - пользователь не найден
 
         final GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
