@@ -1,8 +1,8 @@
 package application.servicies;
 
 import application.models.User;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -34,20 +34,16 @@ public class UserService {
 
 
     // Создание нового пользователя в базе данных.
-    public @Nullable User create(User credentials) {
+    public User create(User credentials) throws DuplicateKeyException {
         final GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("nickname", credentials.getNickname());
         params.addValue("fullname", credentials.getFullname());
         params.addValue("email", credentials.getEmail());
         params.addValue("about", credentials.getAbout());
-        try {
-            template.update("INSERT INTO person(nickname, fullname, email, about)"
-                    + " VALUES (:nickname,:fullname,:email,:about) RETURNING id", params, keyHolder);
-        } catch (DataAccessException e) {
-            e.printStackTrace();
-            return null;
-        }
+        template.update("INSERT INTO person(nickname, fullname, email, about)"
+                        + " VALUES (:nickname,:fullname,:email,:about) RETURNING id", params, keyHolder);
+
         // Пользователь успешно создан. Возвращает данные созданного пользователя.
         return new User(keyHolder.getKey().longValue(),
                         credentials.getNickname(),
