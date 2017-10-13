@@ -72,6 +72,33 @@ public class ThreadService {
     }
 
 
+    // Обновление ветки обсуждения на форуме.
+    public Thread update(String slugOrId, Thread body) throws IndexOutOfBoundsException {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("slug_or_id", slugOrId);
+        params.addValue("title", body.getTitle());
+        params.addValue("message", body.getMessage());
+
+        List<Thread> res;
+        try {
+            params.addValue("id", Long.parseLong(slugOrId));
+            res = template.query(
+                    "UPDATE thread SET title = :title, message = :message " +
+                            "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
+                            "WHERE T.id = :id RETURNING *, nickname author, F.slug forum", params, THREAD_MAPPER
+            );
+        } catch (NumberFormatException e) {
+            params.addValue("slug", slugOrId);
+            res = template.query(
+                    "UPDATE thread SET title = :title, message = :message " +
+                            "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
+                            "WHERE T.slug = :slug RETURNING *, nickname author, F.slug forum", params, THREAD_MAPPER
+            );
+        }
+        return res.get(0);
+    }
+
+
     public Thread findThreadById(Long id) throws IndexOutOfBoundsException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);

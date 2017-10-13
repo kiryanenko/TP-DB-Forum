@@ -1,7 +1,6 @@
 package application.controllers;
 
-import application.models.Forum;
-import application.servicies.ForumService;
+import application.models.Thread;
 import application.servicies.ThreadService;
 import application.views.MessageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +27,18 @@ public class ThreadController {
     public ResponseEntity details(@PathVariable("slug_or_id") String slugOrId) {
         try {
             return ResponseEntity.ok(threadService.findThreadBySlugOrId(slugOrId));
+        } catch (IndexOutOfBoundsException e) {
+            // Ветка обсуждения отсутсвует в системе.
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find thread " + slugOrId));
+        }
+    }
+
+
+    // Обновление ветки обсуждения на форуме.
+    @PostMapping(path = "/details", consumes = "application/json", produces = "application/json")
+    public ResponseEntity update(@RequestBody Thread body, @PathVariable("slug_or_id") String slugOrId) {
+        try {
+            return ResponseEntity.ok(threadService.update(slugOrId, body));
         } catch (IndexOutOfBoundsException e) {
             // Ветка обсуждения отсутсвует в системе.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find thread " + slugOrId));
