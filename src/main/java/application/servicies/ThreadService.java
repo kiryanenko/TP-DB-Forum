@@ -3,7 +3,8 @@ package application.servicies;
 import application.models.Forum;
 import application.models.Thread;
 import application.models.User;
-import org.springframework.dao.DataAccessException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -22,6 +23,7 @@ public class ThreadService {
     private final ForumService forumService;
 
 
+    @Autowired
     public ThreadService(NamedParameterJdbcTemplate template, UserService userService, ForumService forumService) {
         this.template = template;
         this.userService = userService;
@@ -44,7 +46,7 @@ public class ThreadService {
 
 
     // Добавление новой ветки обсуждения на форум
-    public Thread create(Thread body) throws IndexOutOfBoundsException, DataAccessException {
+    public Thread create(Thread body) throws IndexOutOfBoundsException, DuplicateKeyException {
         final User author = userService.findUserByNickname(body.getAuthor());   // Может выпасть IndexOutOfBoundsException - автор не найден
         final Forum forum = forumService.findForumBySlug(body.getForum());      // Может выпасть IndexOutOfBoundsException - форум не найден
 
@@ -87,7 +89,7 @@ public class ThreadService {
             params.addValue("slug", slugOrId);
             condition = "T.slug = :slug";
         }
-        List<Thread> res = template.query(
+        final List<Thread> res = template.query(
                 "UPDATE thread SET title = :title, message = :message " +
                         "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
                         "WHERE "+ condition + " RETURNING *, nickname author, F.slug forum", params, THREAD_MAPPER
@@ -133,7 +135,7 @@ public class ThreadService {
     // Получение списка ветвей обсужления данного форума.
     // Ветви обсуждения выводятся отсортированные по дате создания.
     public List<Thread> forumThreads(String forumSlug) throws IndexOutOfBoundsException {
-        final Forum forum = forumService.findForumBySlug(forumSlug); // Может выпасть IndexOutOfBoundsException - форум не найден
+        forumService.findForumBySlug(forumSlug); // Может выпасть IndexOutOfBoundsException - форум не найден
 
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("slug", forumSlug);
