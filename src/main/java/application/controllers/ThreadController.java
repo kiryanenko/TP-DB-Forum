@@ -52,7 +52,8 @@ public class ThreadController {
         }
     }
 
-    // Обновление ветки обсуждения на форуме.
+
+    // Добавление новых постов в ветку обсуждения на форум.
     @PostMapping(path = "/create", consumes = "application/json", produces = "application/json")
     public ResponseEntity createPosts(@RequestBody List<Post> body, @PathVariable("slug_or_id") String slugOrId) {
         try {
@@ -62,6 +63,18 @@ public class ThreadController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find thread " + slugOrId));
         } catch (PostService.NoParentPostException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(new MessageResponse("At least one parent post is missing in the current thread."));
+        }
+    }
+
+
+    // Получение списка сообщений в данной ветке форуме..
+    @PostMapping(path = "/posts", consumes = "application/json", produces = "application/json")
+    public ResponseEntity posts(@RequestBody Thread body, @PathVariable("slug_or_id") String slugOrId) {
+        try {
+            return ResponseEntity.ok(threadService.update(slugOrId, body));
+        } catch (IndexOutOfBoundsException e) {
+            // Ветка обсуждения отсутсвует в системе.
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find thread " + slugOrId));
         }
     }
 }

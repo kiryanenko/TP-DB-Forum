@@ -4,6 +4,7 @@ import application.models.Post;
 import application.models.Thread;
 import application.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -13,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @Service
@@ -101,12 +104,33 @@ public class PostService {
 
     // Проверяю наличие родителей для постов
     protected Boolean isPostsHasParents(Thread thread, List<Post> body) {
-        //TODO: Реализовать проверку наличия родителей для постов
-        return true;
+        // Создаю фейкую таблицу с body
+        final StringBuilder bodyTable = new StringBuilder();
+        for (Post post : body) {
+            if (post.getParent() != null) {
+                bodyTable.append("SELECT ").append(post.getParent()).append("AS parent UNION ");
+            }
+        }
+        if (bodyTable.length() == 0) {
+            return true;    // Добовляются только корневые посты
+        }
+        bodyTable.setLength(bodyTable.length() - 6);    // Убираю последний UNION
+
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("thread", thread.getId());
+        try {
+            // Нахожу первый BodyTable.parent которого нет в постах ветки
+            template.queryForObject("SELECT BodyTable.parent "
+                    + "FROM (" + bodyTable + ") AS BodyTable LEFT JOIN post P ON BodyTable.parent = P.id "
+                    + "WHERE P.id IS NULL AND P.thread_id = :thread LIMIT 1", params, Long.class);
+            return true;
+        } catch (EmptyResultDataAccessException e) {
+            return false;
+        }
     }
 
 
-//    // Посты в ветки
+//    //TODO: Посты в ветки
 //    // Без проверки наличия ветки
 //    private List<Post> threadPosts(Long threadId) throws IndexOutOfBoundsException {
 //        final MapSqlParameterSource params = new MapSqlParameterSource();
