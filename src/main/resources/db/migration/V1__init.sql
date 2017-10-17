@@ -49,3 +49,5 @@ CREATE TABLE post (
   created TIMESTAMP NOT NULL DEFAULT now(),
   is_edited BOOLEAN NOT NULL DEFAULT FALSE
 );
+
+CREATE INDEX idx_post_thread_created_id ON post (thread_id, created, id);

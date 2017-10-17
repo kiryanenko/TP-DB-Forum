@@ -68,10 +68,10 @@ public class ThreadController {
 
 
     // Получение списка сообщений в данной ветке форуме..
-    @PostMapping(path = "/posts", consumes = "application/json", produces = "application/json")
-    public ResponseEntity posts(@RequestBody Thread body, @PathVariable("slug_or_id") String slugOrId) {
+    @GetMapping(path = "/posts", consumes = "application/json", produces = "application/json")
+    public ResponseEntity posts(@PathVariable("slug_or_id") String slugOrId) {
         try {
-            return ResponseEntity.ok(threadService.update(slugOrId, body));
+            return ResponseEntity.ok(postService.threadPosts(slugOrId));
         } catch (IndexOutOfBoundsException e) {
             // Ветка обсуждения отсутсвует в системе.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find thread " + slugOrId));

@@ -130,18 +130,21 @@ public class PostService {
     }
 
 
-//    //TODO: Посты в ветки
-//    // Без проверки наличия ветки
-//    private List<Post> threadPosts(Long threadId) throws IndexOutOfBoundsException {
-//        final MapSqlParameterSource params = new MapSqlParameterSource();
-//        params.addValue("slug", forumSlug);
-//        final List<Post> posts = template.query(
-//                "SELECT T.id id, P.nickname author, author_id, created, F.slug forum, forum_id, message, T.slug slug, T.title title, votes " +
-//                        "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
-//                        "WHERE F.slug=:slug ORDER BY created", params, POST_MAPPER
-//        );
-//        return threads;
-//    }
+    // Посты в ветки
+    // Сообщения выводятся отсортированные по дате создания.
+    public List<Post> threadPosts(String slugOrId) throws IndexOutOfBoundsException {
+        final Thread thread = threadService.findThreadBySlugOrId(slugOrId);     // Может выпасть IndexOutOfBoundsException - ветка не найдена
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("thread_id", thread.getId());
+        params.addValue("forum", thread.getForum());
+        final List<Post> posts = template.query(
+                "SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, :forum forum, "
+                        + "P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id "
+                        + "FROM post P JOIN person U ON P.author_id = U.id "
+                        + "WHERE P.thread_id = :thread_id ORDER BY created, id", params, POST_MAPPER
+        );
+        return posts;
+    }
 
 
     public static class NoParentPostException extends RuntimeException {}
