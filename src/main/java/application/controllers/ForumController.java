@@ -4,9 +4,11 @@ import application.models.Thread;
 import application.models.Forum;
 import application.servicies.ForumService;
 import application.servicies.ThreadService;
+import application.servicies.UserService;
 import application.views.MessageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,12 +20,14 @@ import org.springframework.web.bind.annotation.*;
 public class ForumController {
     private ForumService forumService;
     private ThreadService threadService;
+    private UserService userService;
 
 
     @Autowired
-    public  ForumController(ForumService forumService, ThreadService threadService) {
+    public  ForumController(ForumService forumService, ThreadService threadService, UserService userService) {
         this.forumService = forumService;
         this.threadService = threadService;
+        this.userService = userService;
     }
 
 
@@ -83,6 +87,18 @@ public class ForumController {
         try {
             return ResponseEntity.ok(threadService.forumThreads(slug));
         } catch (IndexOutOfBoundsException e) {
+            // Форум не найден.
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find forum " + slug));
+        }
+    }
+
+
+    // Получение списка пользователей, у которых есть пост или ветка обсуждения в данном форуме.
+    @GetMapping(path = "/{slug}/users", consumes = "application/json", produces = "application/json")
+    public ResponseEntity forumUsers(@PathVariable String slug) {
+        try {
+            return ResponseEntity.ok(userService.forumUsers(slug));
+        } catch (IncorrectResultSizeDataAccessException e) {
             // Форум не найден.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find forum " + slug));
         }

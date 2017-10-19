@@ -37,6 +37,7 @@ CREATE TABLE thread (
 );
 
 CREATE INDEX idx_thread_forum ON thread (forum_id, created);
+CREATE INDEX idx_thread_forum_author ON thread (forum_id, author_id);
 CREATE INDEX idx_thread_slug ON thread (slug);
 
 
@@ -44,10 +45,11 @@ CREATE TABLE post (
   id SERIAL PRIMARY KEY,
   author_id INTEGER REFERENCES person(id) NOT NULL,
   thread_id INTEGER REFERENCES thread(id) NOT NULL,
-  parent INTEGER REFERENCES post(id) NULL ,
+  parent INTEGER REFERENCES post(id) NULL DEFAULT NULL,
   message TEXT NOT NULL DEFAULT now(),
   created TIMESTAMP NOT NULL DEFAULT now(),
   is_edited BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE INDEX idx_post_thread_created_id ON post (thread_id, created, id);
+CREATE INDEX idx_post_forum_author ON post (thread_id, author_id);

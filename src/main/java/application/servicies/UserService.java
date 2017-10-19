@@ -1,8 +1,11 @@
 package application.servicies;
 
+import application.models.Forum;
 import application.models.User;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -17,8 +20,11 @@ import java.util.List;
 @Transactional
 public class UserService {
     private final NamedParameterJdbcTemplate template;
+    @Autowired
+    private ForumService forumService;
 
 
+    @Autowired
     public UserService(NamedParameterJdbcTemplate template) {
         this.template = template;
     }
@@ -41,7 +47,7 @@ public class UserService {
         params.addValue("fullname", credentials.getFullname());
         params.addValue("email", credentials.getEmail());
         params.addValue("about", credentials.getAbout());
-        template.update("INSERT INTO person(nickname, fullname, email, about)"
+        template.update("INSERT INTO person (nickname, fullname, email, about)"
                         + " VALUES (:nickname,:fullname,:email,:about) RETURNING id", params, keyHolder);
 
         // Пользователь успешно создан. Возвращает данные созданного пользователя.
@@ -83,5 +89,18 @@ public class UserService {
 
         // Пользователь успешно создан. Возвращает данные созданного пользователя.
         return res.get(0);  // Может выпасть IndexOutOfBoundsException - пользователь не найден
+    }
+
+
+    // Получение списка пользователей, у которых есть пост или ветка обсуждения в данном форуме.
+    // Пользователи выводятся отсортированные по nickname в порядке возрастания.
+    // Порядок сотрировки должен соответсвовать побайтовому сравнение в нижнем регистре.
+    public List<User> forumUsers(String forumSlug) throws IncorrectResultSizeDataAccessException {
+        final Long forumId = forumService.getForumIdWithSlug(forumSlug);
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("forum_id", forumId);
+        return template.query("SELECT U.id id, U.email email, U.nickname nickname, U.fullname fullname, U.about about "
+                + "FROM person U JOIN (thread T LEFT JOIN post P ON T.id = P.thread_id) ON U.id = T.author_id OR U.id = P.author_id "
+                + "WHERE T.forum_id = :forum_id ORDER BY nickname", params, USER_MAPPER);
     }
 }

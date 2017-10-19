@@ -4,6 +4,7 @@ import application.models.Forum;
 import application.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -18,13 +19,13 @@ import java.util.List;
 @Transactional
 public class ForumService {
     private final NamedParameterJdbcTemplate template;
+    @Autowired
     private UserService userService;
 
 
     @Autowired
-    public ForumService(NamedParameterJdbcTemplate template, UserService userService) {
+    public ForumService(NamedParameterJdbcTemplate template) {
         this.template = template;
-        this.userService = userService;
     }
 
 
@@ -64,7 +65,15 @@ public class ForumService {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("slug", slug);
         final List<Forum> res = template.query("SELECT F.id id, slug, person_id, title, nickname, posts, threads "
-                + "FROM forum F JOIN person P ON P.id = person_id WHERE F.slug=:slug LIMIT 1", params, FORUM_MAPPER);
+                + "FROM forum F JOIN person P ON P.id = person_id WHERE F.slug=:slug", params, FORUM_MAPPER);
         return res.get(0);  // Может выпасть IndexOutOfBoundsException - форум не найден
+    }
+
+
+    // Получение id форумa по его идентификатору
+    public Long getForumIdWithSlug(String slug) throws IncorrectResultSizeDataAccessException {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("slug", slug);
+        return template.queryForObject("SELECT id FROM forum WHERE slug=:slug", params, Long.class);
     }
 }
