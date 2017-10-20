@@ -1,5 +1,6 @@
 package application.controllers;
 
+import application.models.Post;
 import application.servicies.PostService;
 import application.views.MessageResponse;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
@@ -25,6 +26,17 @@ public class PostController {
     public ResponseEntity details(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(postService.postFull(id));
+        } catch (IncorrectResultSizeDataAccessException e) {
+            // Пост не найден.
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find post with id = " + id));
+        }
+    }
+
+
+    @PostMapping(path = "/details", consumes = "application/json", produces = "application/json")
+    public ResponseEntity edit(@PathVariable Long id, @RequestBody Post body) {
+        try {
+            return ResponseEntity.ok(postService.update(id, body));
         } catch (IncorrectResultSizeDataAccessException e) {
             // Пост не найден.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find post with id = " + id));

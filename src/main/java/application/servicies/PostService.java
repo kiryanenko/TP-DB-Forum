@@ -194,7 +194,7 @@ public class PostService {
     // Получение полной информации о сообщении, включая связанные объекты.
     public PostFullResponse postFull(Long id) throws IncorrectResultSizeDataAccessException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("id",id);
+        params.addValue("id", id);
         return template.queryForObject(
                 "SELECT P.id post_id, P.created post_created, P.is_edited post_is_edited, P.message post_message, P.parent post_parent, "   // Post
                         + "T.id thread_id, T_author.nickname thread_author, T_author.id thread_author_id, T.created thread_created, T.message thread_message, T.slug thread_slug, T.title thread_title, T.votes thread_votes, "  // Thread
@@ -204,6 +204,22 @@ public class PostService {
                         + "JOIN person T_author ON T.author_id = T_author.id "  // Thread
                         + "JOIN person F_user ON F.person_id = F_user.id "      // Forum
                         + "WHERE P.id = :id", params, POST_FULL_MAPPER
+        );
+    }
+
+
+    // Изменение сообщения на форуме.
+    // Если сообщение поменяло текст, то оно должно получить отметку isEdited.
+    public Post update(Long id, Post body) throws IncorrectResultSizeDataAccessException {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("id", id);
+        params.addValue("message", body.getMessage());
+        return template.queryForObject(
+                "UPDATE post SET message = :message, is_edited = is_edited OR message != :message "
+                        + "WHERE id = :id RETURNING *, "
+                        + "(SELECT P.nickname FROM person P WHERE P.id = author_id) author, "
+                        + "(SELECT F.slug FROM thread T JOIN forum F ON T.forum_id = F.id WHERE T.id = thread_id) forum",
+                params, POST_MAPPER
         );
     }
 
