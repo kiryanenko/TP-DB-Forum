@@ -25,4 +25,11 @@ public class ServiceController {
         serviceService.clear();
         return ResponseEntity.ok("Очистка базы успешно завершена");
     }
+
+
+    // Получение инфомарции о базе данных.
+    @GetMapping(path = "/status")
+    public ResponseEntity status() {
+        return ResponseEntity.ok(serviceService.status());
+    }
 }
