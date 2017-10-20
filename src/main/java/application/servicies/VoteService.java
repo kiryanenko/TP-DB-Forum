@@ -14,14 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class VoteService {
     private final NamedParameterJdbcTemplate template;
-    private UserService userService;
     private ThreadService threadService;
 
 
     @Autowired
     public VoteService(NamedParameterJdbcTemplate template, UserService userService, ThreadService threadService) {
         this.template = template;
-        this.userService = userService;
         this.threadService = threadService;
     }
 
