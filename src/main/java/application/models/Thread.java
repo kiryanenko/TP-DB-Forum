@@ -87,6 +87,11 @@ public class Thread {
     }
 
 
+    public void vote(Vote vote) {
+        votes += vote.getVoice();
+    }
+
+
     public Long getId() {
         return id;
     }

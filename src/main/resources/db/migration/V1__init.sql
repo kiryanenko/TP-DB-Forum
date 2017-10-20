@@ -15,7 +15,7 @@ CREATE INDEX idx_person_email ON person (email);
 
 CREATE TABLE forum (
   id SERIAL PRIMARY KEY,
-  posts INTEGER DEFAULT 0,
+  posts INTEGER DEFAULT 0 CHECK (posts >= 0),
   slug TEXT NOT NULL UNIQUE,
   title TEXT NOT NULL,
   threads INTEGER DEFAULT 0,
@@ -53,3 +53,12 @@ CREATE TABLE post (
 
 CREATE INDEX idx_post_thread_created_id ON post (thread_id, created, id);
 CREATE INDEX idx_post_forum_author ON post (thread_id, author_id);
+
+
+CREATE TABLE vote (
+  person_id INTEGER REFERENCES person(id) NOT NULL,
+  thread_id INTEGER REFERENCES thread(id) NOT NULL,
+  voice SMALLINT NOT NULL CHECK (voice = 1 OR voice = -1)
+);
+
+CREATE UNIQUE INDEX idx_vote_person_thread ON vote (thread_id, person_id);

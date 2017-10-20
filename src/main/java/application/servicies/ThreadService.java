@@ -5,6 +5,7 @@ import application.models.Thread;
 import application.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -129,6 +130,13 @@ public class ThreadService {
         } catch (NumberFormatException e) {
             return findThreadBySlug(slugOrId);
         }
+    }
+
+
+    public Long getThreadIdWithSlug(String slug) throws IncorrectResultSizeDataAccessException {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("slug", slug);
+        return template.queryForObject("SELECT id FROM thread WHERE slug = :slug", params, Long.class);
     }
 
 
