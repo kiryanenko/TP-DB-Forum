@@ -1,10 +1,10 @@
-package application.models;
+package application.views;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
-public class ServiceStatus {
+public class ServiceStatusResponse {
     // Кол-во разделов в базе данных.
     @JsonProperty("forum")
     private Long forum;
@@ -23,10 +23,10 @@ public class ServiceStatus {
 
 
     @JsonCreator
-    public ServiceStatus(@JsonProperty("forum") Long forum,
-                         @JsonProperty("post") Long post,
-                         @JsonProperty("thread") Long thread,
-                         @JsonProperty("user") Long user) {
+    public ServiceStatusResponse(@JsonProperty("forum") Long forum,
+                                 @JsonProperty("post") Long post,
+                                 @JsonProperty("thread") Long thread,
+                                 @JsonProperty("user") Long user) {
         this.forum = forum;
         this.post = post;
         this.thread = thread;
