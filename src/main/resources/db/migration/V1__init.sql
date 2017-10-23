@@ -24,6 +24,13 @@ CREATE TABLE forum (
 
 CREATE INDEX idx_forum_slug ON forum (slug);
 
+CREATE FUNCTION inc_forum_threads() RETURNS TRIGGER AS $$
+  BEGIN
+    UPDATE forum SET threads = threads + 1 WHERE id = NEW.forum_id;
+    RETURN NULL;
+  END
+$$ LANGUAGE plpgsql;
+
 
 CREATE TABLE thread (
   id SERIAL PRIMARY KEY,
@@ -39,6 +46,8 @@ CREATE TABLE thread (
 CREATE INDEX idx_thread_forum ON thread (forum_id, created);
 CREATE INDEX idx_thread_forum_author ON thread (forum_id, author_id);
 CREATE INDEX idx_thread_slug ON thread (slug);
+
+CREATE TRIGGER add_thread AFTER INSERT ON thread FOR EACH ROW EXECUTE PROCEDURE inc_forum_threads();
 
 
 CREATE TABLE post (

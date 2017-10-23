@@ -147,11 +147,10 @@ public class ThreadService {
 
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("slug", forumSlug);
-        final List<Thread> threads = template.query(
+        return template.query(
                 "SELECT T.id id, P.nickname author, author_id, created, F.slug forum, forum_id, message, T.slug slug, T.title title, votes " +
                         "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
                         "WHERE F.slug=:slug ORDER BY created", params, THREAD_MAPPER
         );
-        return threads;
     }
 }

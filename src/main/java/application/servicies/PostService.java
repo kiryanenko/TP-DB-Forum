@@ -181,13 +181,12 @@ public class PostService {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("thread_id", thread.getId());
         params.addValue("forum", thread.getForum());
-        final List<Post> posts = template.query(
+        return template.query(
                 "SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, :forum forum, "
                         + "P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id "
                         + "FROM post P JOIN person U ON P.author_id = U.id "
                         + "WHERE P.thread_id = :thread_id ORDER BY created, id", params, POST_MAPPER
         );
-        return posts;
     }
 
 
