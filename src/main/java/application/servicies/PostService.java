@@ -26,15 +26,18 @@ public class PostService {
     private final NamedParameterJdbcTemplate template;
     private final UserService userService;
     private final ThreadService threadService;
+    private final ForumService forumService;
 
 
     @Autowired
     public PostService(NamedParameterJdbcTemplate template,
                        UserService userService,
-                       ThreadService threadService) {
+                       ThreadService threadService,
+                       ForumService forumService) {
         this.template = template;
         this.userService = userService;
         this.threadService = threadService;
+        this.forumService = forumService;
     }
 
 
@@ -127,6 +130,7 @@ public class PostService {
                 "INSERT INTO post(author_id, thread_id, message, parent) " +
                 "VALUES " + values + " RETURNING id, created", params, keys
         );
+        forumService.incForumPostsIncludedThread(thread.getId(), body.size());
 
         final List<Post> results = new ArrayList<>();
         for (Integer i = 0; i < body.size(); ++i) {

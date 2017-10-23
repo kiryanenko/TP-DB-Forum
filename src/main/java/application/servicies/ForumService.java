@@ -76,4 +76,13 @@ public class ForumService {
         params.addValue("slug", slug);
         return template.queryForObject("SELECT id FROM forum WHERE slug=:slug", params, Long.class);
     }
+
+
+    public void incForumPostsIncludedThread(Long threadId, Integer count) {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("thread_id", threadId);
+        params.addValue("count", count);
+        template.update("UPDATE forum SET posts = posts + :count "
+                + "WHERE id = (SELECT forum_id FROM thread WHERE id = :thread_id)", params);
+    }
 }
