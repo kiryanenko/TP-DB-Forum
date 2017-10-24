@@ -3,6 +3,7 @@ package application.servicies;
 import application.models.Forum;
 import application.models.Thread;
 import application.models.User;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
@@ -13,6 +14,8 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 
 
@@ -57,9 +60,10 @@ public class ThreadService {
         params.addValue("forum_id", forum.getId());
         params.addValue("title", body.getTitle());
         params.addValue("slug", body.getSlug());
+        params.addValue("created", body.getCreated() == null ? new Date() : body.getCreated());
         params.addValue("message", body.getMessage());
         template.update("INSERT INTO thread(author_id, forum_id, title, created, message, slug) " +
-                "VALUES (:author_id, :forum_id, :title, now(), :message, :slug) RETURNING id", params, keyHolder);
+                "VALUES (:author_id, :forum_id, :title, :created, :message, :slug) RETURNING id", params, keyHolder);
         // Форум успешно создан. Возвращает данные созданного форума.
         return new Thread(keyHolder.getKey().longValue(),
                           body.getAuthor(),
@@ -141,15 +145,20 @@ public class ThreadService {
 
     // Получение списка ветвей обсужления данного форума.
     // Ветви обсуждения выводятся отсортированные по дате создания.
-    public List<Thread> forumThreads(String forumSlug) throws IndexOutOfBoundsException {
-        forumService.findForumBySlug(forumSlug); // Может выпасть IndexOutOfBoundsException - форум не найден
+    public List<Thread> forumThreads(String forumSlug, Boolean isDesc, Long limit, @Nullable Date since)
+            throws IndexOutOfBoundsException {
+        final Forum forum = forumService.findForumBySlug(forumSlug);
 
         final MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("slug", forumSlug);
+        params.addValue("forum_id", forum.getId());
+        params.addValue("since", since);
+        params.addValue("limit", limit);
         return template.query(
-                "SELECT T.id id, P.nickname author, author_id, created, F.slug forum, forum_id, message, T.slug slug, T.title title, votes " +
-                        "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
-                        "WHERE F.slug=:slug ORDER BY created", params, THREAD_MAPPER
+                "SELECT T.id id, P.nickname author, author_id, created, F.slug forum, forum_id, message, T.slug slug, T.title title, votes "
+                        + "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id "
+                        + "WHERE F.id = :forum_id " + (since != null ? "AND created " + (isDesc ? "<=" : ">=") + " :since " : "")
+                        + "ORDER BY created " + (isDesc ? "DESC" : "ASC")
+                        + (limit != null ? " LIMIT :limit" : ""), params, THREAD_MAPPER
         );
     }
 }

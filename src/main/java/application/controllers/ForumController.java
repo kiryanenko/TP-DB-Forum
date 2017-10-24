@@ -14,6 +14,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 
 @RestController
 @CrossOrigin
@@ -84,9 +88,22 @@ public class ForumController {
     // Получение списка ветвей обсужления данного форума.
     // Ветви обсуждения выводятся отсортированные по дате создания.
     @GetMapping(path = "/{slug}/threads", produces = "application/json")
-    public ResponseEntity forumThreads(@PathVariable String slug) {
+    public ResponseEntity forumThreads(@PathVariable String slug,
+                                       @RequestParam(value="desc", required=false, defaultValue="false") Boolean desc,
+                                       @RequestParam(value="limit", required=false) Long limit,
+                                       @RequestParam(value="since", required=false) String sinceStr) {
+        Date since = null;
+        if (sinceStr != null) {
+            try {
+                final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+                since = dateFormat.parse(sinceStr);
+            } catch (ParseException e) {
+                return ResponseEntity.badRequest().body("Bad since");
+            }
+        }
+
         try {
-            return ResponseEntity.ok(threadService.forumThreads(slug));
+            return ResponseEntity.ok(threadService.forumThreads(slug, desc, limit, since));
         } catch (IndexOutOfBoundsException e) {
             // Форум не найден.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find forum " + slug));
