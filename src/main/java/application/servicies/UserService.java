@@ -75,17 +75,31 @@ public class UserService {
 
 
     // Изменение информации в профиле пользователя.
-    public User update(User credentials) throws DuplicateKeyException, IndexOutOfBoundsException {
+    public User update(User credentials) throws DuplicateKeyException, IncorrectResultSizeDataAccessException {
+        if (credentials.getFullname() == null &&
+                credentials.getEmail() == null &&
+                credentials.getAbout() == null) {
+            return findUserByNickname(credentials.getNickname());
+        }
+
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("nickname", credentials.getNickname());
-        params.addValue("fullname", credentials.getFullname());
-        params.addValue("email", credentials.getEmail());
-        params.addValue("about", credentials.getAbout());
-        final List<User> res = template.query("UPDATE person SET fullname=:fullname, email=:email, about=:about"
-                + " WHERE nickname=:nickname RETURNING *", params, USER_MAPPER);
-
-        // Пользователь успешно создан. Возвращает данные созданного пользователя.
-        return res.get(0);  // Может выпасть IndexOutOfBoundsException - пользователь не найден
+        final StringBuilder values = new StringBuilder();
+        if (credentials.getFullname() != null) {
+            params.addValue("fullname", credentials.getFullname());
+            values.append("fullname = :fullname, ");
+        }
+        if (credentials.getEmail() != null) {
+            params.addValue("email", credentials.getEmail());
+            values.append("email = :email, ");
+        }
+        if (credentials.getAbout() != null) {
+            params.addValue("about", credentials.getAbout());
+            values.append("about = :about, ");
+        }
+        values.setLength(values.length() - 2); // Убираю последнюю ', '
+        return template.queryForObject("UPDATE person SET " + values
+                + " WHERE LOWER(nickname) = LOWER(:nickname) RETURNING *", params, USER_MAPPER);
     }
 
 
@@ -99,20 +113,5 @@ public class UserService {
         return template.query("SELECT U.id id, U.email email, U.nickname nickname, U.fullname fullname, U.about about "
                 + "FROM person U JOIN (thread T LEFT JOIN post P ON T.id = P.thread_id) ON U.id = T.author_id OR U.id = P.author_id "
                 + "WHERE T.forum_id = :forum_id ORDER BY nickname", params, USER_MAPPER);
-    }
-
-
-    public static class UserConflicted extends RuntimeException {
-        private List<User> conflictedUsers;
-
-
-        public UserConflicted(List<User> conflictedUsers) {
-            this.conflictedUsers = conflictedUsers;
-        }
-
-
-        public List<User> getConflictedUsers() {
-            return conflictedUsers;
-        }
     }
 }

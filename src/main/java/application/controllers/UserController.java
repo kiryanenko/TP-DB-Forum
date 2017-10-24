@@ -60,7 +60,7 @@ public class UserController {
             return ResponseEntity.ok(updatedUser);
         } catch (DuplicateKeyException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(new MessageResponse("Новые данные профиля пользователя конфликтуют с имеющимися пользователями."));
-        } catch (IndexOutOfBoundsException e) {
+        } catch (IncorrectResultSizeDataAccessException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find user with nickname " + nickname));
         }
     }
