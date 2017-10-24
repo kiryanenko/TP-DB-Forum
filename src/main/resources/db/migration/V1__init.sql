@@ -16,13 +16,13 @@ CREATE UNIQUE INDEX idx_person_email ON person (LOWER(email));
 CREATE TABLE forum (
   id SERIAL PRIMARY KEY,
   posts INTEGER DEFAULT 0 CHECK (posts >= 0),
-  slug TEXT NOT NULL UNIQUE,
+  slug CITEXT NOT NULL UNIQUE,
   title TEXT NOT NULL,
   threads INTEGER DEFAULT 0,
   person_id INTEGER REFERENCES person(id) NOT NULL
 );
 
-CREATE INDEX idx_forum_slug ON forum (slug);
+CREATE INDEX idx_forum_slug ON forum (LOWER(slug));
 
 CREATE FUNCTION inc_forum_threads() RETURNS TRIGGER AS $$
   BEGIN

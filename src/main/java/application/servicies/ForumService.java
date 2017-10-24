@@ -65,7 +65,7 @@ public class ForumService {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("slug", slug);
         final List<Forum> res = template.query("SELECT F.id id, slug, person_id, title, nickname, posts, threads "
-                + "FROM forum F JOIN person P ON P.id = person_id WHERE F.slug=:slug", params, FORUM_MAPPER);
+                + "FROM forum F JOIN person P ON P.id = person_id WHERE LOWER(F.slug) = LOWER(:slug)", params, FORUM_MAPPER);
         return res.get(0);  // Может выпасть IndexOutOfBoundsException - форум не найден
     }
 
