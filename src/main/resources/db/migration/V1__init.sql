@@ -39,7 +39,7 @@ CREATE TABLE thread (
   title TEXT NOT NULL,
   message TEXT NOT NULL,
   slug CITEXT NULL UNIQUE,
-  votes INTEGER DEFAULT 0 CHECK (votes >= 0),
+  votes INTEGER DEFAULT 0,
   created TIMESTAMP NOT NULL DEFAULT now()
 );
 
@@ -49,7 +49,14 @@ CREATE UNIQUE INDEX idx_thread_slug ON thread (LOWER(slug));
 
 CREATE FUNCTION inc_thread_votes() RETURNS TRIGGER AS $$
 BEGIN
-  UPDATE thread SET votes = votes + 1 WHERE id = NEW.thread_id;
+  UPDATE thread SET votes = votes + NEW.voice WHERE id = NEW.thread_id;
+  RETURN NULL;
+END
+$$ LANGUAGE plpgsql;
+
+CREATE FUNCTION set_thread_votes() RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE thread SET votes = votes - OLD.voice + NEW.voice WHERE id = NEW.thread_id;
   RETURN NULL;
 END
 $$ LANGUAGE plpgsql;
@@ -80,3 +87,4 @@ CREATE TABLE vote (
 CREATE UNIQUE INDEX idx_vote_person_thread ON vote (thread_id, person_id);
 
 CREATE TRIGGER add_vote AFTER INSERT ON vote FOR EACH ROW EXECUTE PROCEDURE inc_thread_votes();
+CREATE TRIGGER set_vote AFTER UPDATE ON vote FOR EACH ROW EXECUTE PROCEDURE set_thread_votes();

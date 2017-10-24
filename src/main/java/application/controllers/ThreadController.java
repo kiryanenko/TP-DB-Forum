@@ -89,11 +89,8 @@ public class ThreadController {
     public ResponseEntity vote(@PathVariable("slug_or_id") String slugOrId, @RequestBody Vote body) {
         try {
             return ResponseEntity.ok(voteService.vote(slugOrId, body));
-        } catch (IndexOutOfBoundsException e) {
-            // Ветка обсуждения отсутсвует в системе.
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find thread " + slugOrId));
         } catch (DataIntegrityViolationException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find user " + body.getNickname()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find user or thread"));
         }
     }
 }
