@@ -66,10 +66,10 @@ public class ThreadService {
                 "VALUES (:author_id, :forum_id, :title, :created, :message, :slug) RETURNING id", params, keyHolder);
         // Форум успешно создан. Возвращает данные созданного форума.
         return new Thread(keyHolder.getKey().longValue(),
-                          body.getAuthor(),
+                          author.getNickname(),
                           author.getId(),
                           body.getCreated(),
-                          body.getForum(),
+                          forum.getSlug(),
                           forum.getId(),
                           body.getMessage(),
                           body.getSlug(),
@@ -96,37 +96,35 @@ public class ThreadService {
         final List<Thread> res = template.query(
                 "UPDATE thread SET title = :title, message = :message " +
                         "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
-                        "WHERE "+ condition + " RETURNING *, nickname author, F.slug forum", params, THREAD_MAPPER
+                        "WHERE " + condition + " RETURNING *, nickname author, F.slug forum", params, THREAD_MAPPER
         );
         return res.get(0);
     }
 
 
-    public Thread findThreadById(Long id) throws IndexOutOfBoundsException {
+    public Thread findThreadById(Long id) throws IncorrectResultSizeDataAccessException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);
-        final List<Thread> res = template.query(
+        return template.queryForObject(
                 "SELECT T.id id, P.nickname author, author_id, created, F.slug forum, forum_id, message, T.slug slug, T.title title, votes " +
                         "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
-                        "WHERE T.id=:id LIMIT 1", params, THREAD_MAPPER
+                        "WHERE T.id = :id", params, THREAD_MAPPER
         );
-        return res.get(0);  // Может выпасть IndexOutOfBoundsException - ветвь не найдена
     }
 
 
-    public Thread findThreadBySlug(String slug) throws IndexOutOfBoundsException {
+    public Thread findThreadBySlug(String slug) throws IncorrectResultSizeDataAccessException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("slug", slug);
-        final List<Thread> res = template.query(
+        return template.queryForObject(
                 "SELECT T.id id, P.nickname author, author_id, created, F.slug forum, forum_id, message, T.slug slug, T.title title, votes " +
                         "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
-                        "WHERE T.slug=:slug LIMIT 1", params, THREAD_MAPPER
+                        "WHERE LOWER(T.slug) = LOWER(:slug)", params, THREAD_MAPPER
         );
-        return res.get(0);  // Может выпасть IndexOutOfBoundsException - ветвь не найдена
     }
 
 
-    public Thread findThreadBySlugOrId(String slugOrId) throws IndexOutOfBoundsException {
+    public Thread findThreadBySlugOrId(String slugOrId) throws IncorrectResultSizeDataAccessException {
         try {
             final Long id = Long.parseLong(slugOrId);
             return findThreadById(id);

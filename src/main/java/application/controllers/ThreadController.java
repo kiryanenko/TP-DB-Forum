@@ -9,6 +9,7 @@ import application.servicies.VoteService;
 import application.views.MessageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -62,7 +63,7 @@ public class ThreadController {
     public ResponseEntity createPosts(@RequestBody List<Post> body, @PathVariable("slug_or_id") String slugOrId) {
         try {
             return ResponseEntity.status(HttpStatus.CREATED).body(postService.createPosts(slugOrId, body));
-        } catch (IndexOutOfBoundsException e) {
+        } catch (IncorrectResultSizeDataAccessException e) {
             // Ветка обсуждения отсутсвует в системе.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find thread " + slugOrId));
         } catch (PostService.NoParentPostException e) {

@@ -99,8 +99,12 @@ public class PostService {
 
     // Добавление новых постов в ветку обсуждения на форум.
     // Все посты, созданные в рамках одного вызова данного метода должны иметь одинаковую дату создания (Post.Created).
-    public List<Post> createPosts(String slugOrId, List<Post> body) throws IndexOutOfBoundsException, NoParentPostException {
-        final Thread thread = threadService.findThreadBySlugOrId(slugOrId);     // Может выпасть IndexOutOfBoundsException - ветка не найдена
+    public List<Post> createPosts(String slugOrId, List<Post> body) throws IncorrectResultSizeDataAccessException, NoParentPostException {
+        final Thread thread = threadService.findThreadBySlugOrId(slugOrId);     // Может выпасть IncorrectResultSizeDataAccessException - ветка не найдена
+
+        if (body.isEmpty()) {
+            return new ArrayList<>();
+        }
 
         if (!isPostsHasParents(thread, body)) {
             throw new NoParentPostException();

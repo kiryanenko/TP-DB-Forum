@@ -38,14 +38,14 @@ CREATE TABLE thread (
   forum_id INTEGER REFERENCES forum(id) NOT NULL,
   title TEXT NOT NULL,
   message TEXT NOT NULL,
-  slug TEXT NULL UNIQUE,
+  slug CITEXT NULL UNIQUE,
   votes INTEGER DEFAULT 0 CHECK (votes >= 0),
   created TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_thread_forum ON thread (forum_id, created);
 CREATE INDEX idx_thread_forum_author ON thread (forum_id, author_id);
-CREATE INDEX idx_thread_slug ON thread (slug);
+CREATE UNIQUE INDEX idx_thread_slug ON thread (LOWER(slug));
 
 CREATE FUNCTION inc_thread_votes() RETURNS TRIGGER AS $$
 BEGIN
