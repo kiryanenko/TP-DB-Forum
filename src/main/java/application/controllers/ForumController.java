@@ -83,7 +83,7 @@ public class ForumController {
 
     // Получение списка ветвей обсужления данного форума.
     // Ветви обсуждения выводятся отсортированные по дате создания.
-    @GetMapping(path = "/{slug}/threads", consumes = "application/json", produces = "application/json")
+    @GetMapping(path = "/{slug}/threads", produces = "application/json")
     public ResponseEntity forumThreads(@PathVariable String slug) {
         try {
             return ResponseEntity.ok(threadService.forumThreads(slug));
