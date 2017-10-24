@@ -144,7 +144,7 @@ public class ThreadService {
     // Получение списка ветвей обсужления данного форума.
     // Ветви обсуждения выводятся отсортированные по дате создания.
     public List<Thread> forumThreads(String forumSlug, Boolean isDesc, Long limit, @Nullable Date since)
-            throws IndexOutOfBoundsException {
+            throws IncorrectResultSizeDataAccessException {
         final Forum forum = forumService.findForumBySlug(forumSlug);
 
         final MapSqlParameterSource params = new MapSqlParameterSource();

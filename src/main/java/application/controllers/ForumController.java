@@ -59,7 +59,7 @@ public class ForumController {
         try {
             final Forum forum = forumService.findForumBySlug(slug);
             return ResponseEntity.ok(forum);
-        } catch (IndexOutOfBoundsException e) {
+        } catch (IncorrectResultSizeDataAccessException e) {
             // Форум отсутсвует в системе.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     new MessageResponse("Can't find forum with slug " + slug)
@@ -104,7 +104,7 @@ public class ForumController {
 
         try {
             return ResponseEntity.ok(threadService.forumThreads(slug, desc, limit, since));
-        } catch (IndexOutOfBoundsException e) {
+        } catch (IncorrectResultSizeDataAccessException e) {
             // Форум не найден.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find forum " + slug));
         }

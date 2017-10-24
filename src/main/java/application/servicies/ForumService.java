@@ -56,12 +56,13 @@ public class ForumService {
 
 
     // Получение информации о форуме по его идентификаторе.
-    public Forum findForumBySlug(String slug) throws IndexOutOfBoundsException {
+    public Forum findForumBySlug(String slug) throws IncorrectResultSizeDataAccessException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("slug", slug);
-        final List<Forum> res = template.query("SELECT F.id id, slug, person_id, title, nickname person_nickname, posts, threads "
-                + "FROM forum F JOIN person P ON P.id = person_id WHERE LOWER(F.slug) = LOWER(:slug)", params, FORUM_MAPPER);
-        return res.get(0);  // Может выпасть IndexOutOfBoundsException - форум не найден
+        return template.queryForObject(
+                "SELECT F.id id, F.slug slug, F.person_id person_id, F.title title, P.nickname person_nickname, F.posts posts, F.threads threads "
+                        + "FROM forum F JOIN person P ON P.id = person_id WHERE LOWER(F.slug) = LOWER(:slug)",
+                params, FORUM_MAPPER);
     }
 
 
