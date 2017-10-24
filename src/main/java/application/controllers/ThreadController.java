@@ -35,7 +35,7 @@ public class ThreadController {
 
 
     // Получение информации о ветке обсуждения по его имени.
-    @GetMapping(path = "/details", consumes = "application/json", produces = "application/json")
+    @GetMapping(path = "/details", produces = "application/json")
     public ResponseEntity details(@PathVariable("slug_or_id") String slugOrId) {
         try {
             return ResponseEntity.ok(threadService.findThreadBySlugOrId(slugOrId));
@@ -73,7 +73,7 @@ public class ThreadController {
 
 
     // Получение списка сообщений в данной ветке форуме..
-    @GetMapping(path = "/posts", consumes = "application/json", produces = "application/json")
+    @GetMapping(path = "/posts", produces = "application/json")
     public ResponseEntity posts(@PathVariable("slug_or_id") String slugOrId) {
         try {
             return ResponseEntity.ok(postService.threadPosts(slugOrId));
