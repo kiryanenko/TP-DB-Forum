@@ -1,6 +1,7 @@
 package application.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ public class Thread {
     // x-isnullable: true
     // example: 2017-01-01T00:00:00.000Z
     @JsonProperty("created")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
     private Timestamp created;
 
     // Форум, в котором расположена данная ветка обсуждени
@@ -108,7 +110,6 @@ public class Thread {
         this.author = author;
     }
 
-    @JsonIgnore
     public Timestamp getCreated() {
         return created;
     }
@@ -173,11 +174,5 @@ public class Thread {
 
     public void setForumId(Long forumId) {
         this.forumId = forumId;
-    }
-
-
-    @JsonProperty("created")
-    public String getCreatedAsString() {
-        return created.toString();
     }
 }

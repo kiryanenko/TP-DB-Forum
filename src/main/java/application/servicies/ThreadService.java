@@ -57,10 +57,9 @@ public class ThreadService {
         params.addValue("forum_id", forum.getId());
         params.addValue("title", body.getTitle());
         params.addValue("slug", body.getSlug());
-        params.addValue("created", body.getCreated());
         params.addValue("message", body.getMessage());
         template.update("INSERT INTO thread(author_id, forum_id, title, created, message, slug) " +
-                "VALUES (:author_id, :forum_id, :title, :created, :message, :slug) RETURNING id", params, keyHolder);
+                "VALUES (:author_id, :forum_id, :title, now(), :message, :slug) RETURNING id", params, keyHolder);
         // Форум успешно создан. Возвращает данные созданного форума.
         return new Thread(keyHolder.getKey().longValue(),
                           body.getAuthor(),
