@@ -75,7 +75,7 @@ public class ForumController {
             body.setForum(slug);
             final Thread createdThread = threadService.create(body);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdThread);
-        } catch (IndexOutOfBoundsException e) {
+        } catch (IncorrectResultSizeDataAccessException e) {
             // Автор ветки или форум не найдены.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find forum or author"));
         } catch (DuplicateKeyException e) {

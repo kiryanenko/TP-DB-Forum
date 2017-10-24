@@ -50,9 +50,9 @@ public class ThreadService {
 
 
     // Добавление новой ветки обсуждения на форум
-    public Thread create(Thread body) throws IndexOutOfBoundsException, DuplicateKeyException {
-        final User author = userService.findUserByNickname(body.getAuthor());   // Может выпасть IndexOutOfBoundsException - автор не найден
-        final Forum forum = forumService.findForumBySlug(body.getForum());      // Может выпасть IndexOutOfBoundsException - форум не найден
+    public Thread create(Thread body) throws IncorrectResultSizeDataAccessException, DuplicateKeyException {
+        final User author = userService.findUserByNickname(body.getAuthor());   // Может выпасть IncorrectResultSizeDataAccessException - автор не найден
+        final Forum forum = forumService.findForumBySlug(body.getForum());      // Может выпасть IncorrectResultSizeDataAccessException - форум не найден
 
         final GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         final MapSqlParameterSource params = new MapSqlParameterSource();
