@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @CrossOrigin
-@RequestMapping(path = "/service")
+@RequestMapping(path = "/api/service")
 public class ServiceController {
     ServiceService serviceService;
 

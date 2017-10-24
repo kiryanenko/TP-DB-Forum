@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @CrossOrigin
-@RequestMapping(path = "/forum")
+@RequestMapping(path = "/api/forum")
 public class ForumController {
     private ForumService forumService;
     private ThreadService threadService;

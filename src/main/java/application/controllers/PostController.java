@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @CrossOrigin
-@RequestMapping(path = "/post/{id}")
+@RequestMapping(path = "/api/post/{id}")
 public class PostController {
     private PostService postService;
 

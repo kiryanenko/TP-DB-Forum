@@ -18,7 +18,7 @@ import java.util.List;
 
 @RestController
 @CrossOrigin
-@RequestMapping(path = "/thread/{slug_or_id}")
+@RequestMapping(path = "/api/thread/{slug_or_id}")
 public class ThreadController {
     private ThreadService threadService;
     private PostService postService;
