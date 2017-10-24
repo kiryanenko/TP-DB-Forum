@@ -1,9 +1,7 @@
 package application.servicies;
 
-import application.models.Forum;
 import application.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
@@ -64,16 +62,15 @@ public class UserService {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("nickname", credentials.getNickname());
         params.addValue("email", credentials.getEmail());
-        return template.query("SELECT * FROM person WHERE nickname=:nickname OR email=:email", params, USER_MAPPER);
+        return template.query("SELECT * FROM person WHERE LOWER(nickname) = LOWER(:nickname) OR LOWER(email) = LOWER(:email)", params, USER_MAPPER);
     }
 
 
     // Получение информации о пользователе форума по его имени.
-    public User findUserByNickname(String nickname) throws IndexOutOfBoundsException {
+    public User findUserByNickname(String nickname) throws IncorrectResultSizeDataAccessException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("nickname", nickname);
-        final List<User> res = template.query("SELECT * FROM person WHERE nickname=:nickname LIMIT 1", params, USER_MAPPER);
-        return res.get(0);  // Может выпасть IndexOutOfBoundsException - пользователь не найден
+        return template.queryForObject("SELECT * FROM person WHERE LOWER(nickname) = LOWER(:nickname)", params, USER_MAPPER);
     }
 
 
@@ -102,5 +99,20 @@ public class UserService {
         return template.query("SELECT U.id id, U.email email, U.nickname nickname, U.fullname fullname, U.about about "
                 + "FROM person U JOIN (thread T LEFT JOIN post P ON T.id = P.thread_id) ON U.id = T.author_id OR U.id = P.author_id "
                 + "WHERE T.forum_id = :forum_id ORDER BY nickname", params, USER_MAPPER);
+    }
+
+
+    public static class UserConflicted extends RuntimeException {
+        private List<User> conflictedUsers;
+
+
+        public UserConflicted(List<User> conflictedUsers) {
+            this.conflictedUsers = conflictedUsers;
+        }
+
+
+        public List<User> getConflictedUsers() {
+            return conflictedUsers;
+        }
     }
 }

@@ -1,4 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS citext;
+CREATE EXTENSION IF NOT EXISTS CITEXT WITH SCHEMA public;
 
 
 CREATE TABLE person (
@@ -9,8 +9,8 @@ CREATE TABLE person (
   about TEXT
 );
 
-CREATE INDEX idx_person_nickname ON person (nickname);
-CREATE INDEX idx_person_email ON person (email);
+CREATE UNIQUE INDEX idx_person_nickname ON person (LOWER(nickname));
+CREATE UNIQUE INDEX idx_person_email ON person (LOWER(email));
 
 
 CREATE TABLE forum (

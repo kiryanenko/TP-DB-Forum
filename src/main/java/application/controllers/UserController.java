@@ -6,6 +6,7 @@ import application.views.MessageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -44,7 +45,7 @@ public class UserController {
         try {
             final User user = userService.findUserByNickname(nickname);
             return ResponseEntity.ok(user);
-        }catch (IndexOutOfBoundsException e){
+        }catch (IncorrectResultSizeDataAccessException e){
             // Пользователь отсутсвует в системе.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find user with nickname " + nickname));
         }
