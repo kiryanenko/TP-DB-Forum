@@ -7,6 +7,7 @@ import application.servicies.ThreadService;
 import application.servicies.UserService;
 import application.views.MessageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -37,13 +38,13 @@ public class ForumController {
         try {
             final Forum createdForum = forumService.create(body);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdForum);
-        } catch (IndexOutOfBoundsException e) {
+        } catch (DuplicateKeyException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(forumService.findForumBySlug(body.getSlug()));
+        } catch (DataIntegrityViolationException e) {
             // Пользователь отсутсвует в системе.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     new MessageResponse("Can't find user with nickname " + body.getUserNickname())
             );
-        } catch (DuplicateKeyException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(forumService.findForumBySlug(body.getSlug()));
         }
     }
 

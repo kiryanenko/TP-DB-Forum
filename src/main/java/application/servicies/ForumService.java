@@ -3,6 +3,7 @@ package application.servicies;
 import application.models.Forum;
 import application.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
@@ -41,15 +42,15 @@ public class ForumService {
 
 
     // Создание нового форума.
-    public Forum create(Forum body) throws IndexOutOfBoundsException, DuplicateKeyException {
-        final User user = userService.findUserByNickname(body.getUserNickname());   // Может выпасть IndexOutOfBoundsException - пользователь не найден
-
+    public Forum create(Forum body) throws DataIntegrityViolationException, DuplicateKeyException {
         final GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("slug", body.getSlug());
-        params.addValue("user_id", user.getId());
         params.addValue("title", body.getTitle());
-        template.update("INSERT INTO forum(slug, person_id, title) VALUES (:slug, :user_id, :title) RETURNING id", params, keyHolder);
+        params.addValue("user", body.getUserNickname());
+        template.update("INSERT INTO forum(slug, person_id, title) "
+                + "VALUES (:slug, (SELECT id FROM person WHERE LOWER(nickname) = LOWER(:user)), :title) RETURNING id",
+                params, keyHolder);
         // Форум успешно создан. Возвращает данные созданного форума.
         return new Forum(keyHolder.getKey().longValue(),
                          body.getSlug(),
