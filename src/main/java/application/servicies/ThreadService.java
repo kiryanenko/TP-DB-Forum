@@ -150,13 +150,16 @@ public class ThreadService {
         final Forum forum = forumService.findForumBySlug(forumSlug);
 
         final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("forum_slug", forum.getSlug());
         params.addValue("forum_id", forum.getId());
         params.addValue("since", since);
         params.addValue("limit", limit);
         return template.query(
-                "SELECT T.id id, P.nickname author, author_id, created, F.slug forum, forum_id, message, T.slug slug, T.title title, votes "
-                        + "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id "
-                        + "WHERE F.id = :forum_id " + (since != null ? "AND created " + (isDesc ? "<=" : ">=") + " :since " : "")
+                "SELECT T.id id, P.nickname author, T.author_id author_id, T.created created, :forum_slug forum, "
+                        + ":forum_id forum_id, T.message message, T.slug slug, T.title title, T.votes votes "
+                        + "FROM thread T JOIN person P ON P.id = author_id "
+                        + "WHERE T.forum_id = :forum_id "
+                        + (since != null ? "AND created " + (isDesc ? "<=" : ">=") + " :since " : "")
                         + "ORDER BY created " + (isDesc ? "DESC" : "ASC")
                         + (limit != null ? " LIMIT :limit" : ""), params, THREAD_MAPPER
         );
