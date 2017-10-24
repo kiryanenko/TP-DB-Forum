@@ -34,7 +34,7 @@ public class ForumService {
             res.getLong("id"),
             res.getString("slug"),
             res.getString("title"),
-            res.getString("nickname"),
+            res.getString("person_nickname"),
             res.getLong("person_id"),
             res.getLong("posts"),
             res.getLong("threads")
@@ -48,16 +48,10 @@ public class ForumService {
         params.addValue("slug", body.getSlug());
         params.addValue("title", body.getTitle());
         params.addValue("user", body.getUserNickname());
-        template.update("INSERT INTO forum(slug, person_id, title) "
-                + "VALUES (:slug, (SELECT id FROM person WHERE LOWER(nickname) = LOWER(:user)), :title) RETURNING id",
-                params, keyHolder);
-        // Форум успешно создан. Возвращает данные созданного форума.
-        return new Forum(keyHolder.getKey().longValue(),
-                         body.getSlug(),
-                         body.getTitle(),
-                         body.getUserNickname(),
-                         body.getUserId(),
-                         null, null);
+        return template.queryForObject("WITH get_user AS (SELECT id, nickname FROM person WHERE LOWER(nickname) = LOWER(:user)) "
+                + "INSERT INTO forum(slug, person_id, title) "
+                + "VALUES (:slug, (SELECT id FROM get_user), :title) RETURNING *, (SELECT nickname FROM get_user) person_nickname",
+                params, FORUM_MAPPER);
     }
 
 
@@ -65,7 +59,7 @@ public class ForumService {
     public Forum findForumBySlug(String slug) throws IndexOutOfBoundsException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("slug", slug);
-        final List<Forum> res = template.query("SELECT F.id id, slug, person_id, title, nickname, posts, threads "
+        final List<Forum> res = template.query("SELECT F.id id, slug, person_id, title, nickname person_nickname, posts, threads "
                 + "FROM forum F JOIN person P ON P.id = person_id WHERE LOWER(F.slug) = LOWER(:slug)", params, FORUM_MAPPER);
         return res.get(0);  // Может выпасть IndexOutOfBoundsException - форум не найден
     }
