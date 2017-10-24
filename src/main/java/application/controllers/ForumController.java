@@ -50,7 +50,7 @@ public class ForumController {
 
 
     // Получение информации о форуме по его идентификаторе.
-    @GetMapping(path = "/{slug}/details", consumes = "application/json", produces = "application/json")
+    @GetMapping(path = "/{slug}/details", produces = "application/json")
     public ResponseEntity details(@PathVariable String slug) {
         try {
             final Forum forum = forumService.findForumBySlug(slug);
