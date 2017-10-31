@@ -25,10 +25,14 @@ public class PostController {
     private ThreadService threadService;
 
 
-    public PostController(PostService postService, UserService userService, ForumService forumService) {
+    public PostController(PostService postService,
+                          UserService userService,
+                          ForumService forumService,
+                          ThreadService threadService) {
         this.postService = postService;
         this.userService = userService;
         this.forumService = forumService;
+        this.threadService = threadService;
     }
 
 
@@ -36,25 +40,27 @@ public class PostController {
     @GetMapping(path = "/details", produces = "application/json")
     public ResponseEntity details(@PathVariable Long id,
                                   @RequestParam(value="related", required=false) List<String> related) {
+        final Post post;
         try {
-            final Post post = postService.findPostById(id);
-            final PostFullResponse postFull = new PostFullResponse(post);
-            if (related != null) {
-                if (related.contains("user")) {
-                    postFull.setAuthor(userService.findUserById(post.getId()));
-                }
-                if (related.contains("forum")) {
-                    postFull.setForum(forumService.findForumBySlug(post.getForum()));
-                }
-                if (related.contains("thread")) {
-                    postFull.setThread(threadService.findThreadById(post.getThread()));
-                }
-            }
-            return ResponseEntity.ok(postFull);
+            post = postService.findPostById(id);
         } catch (IncorrectResultSizeDataAccessException e) {
             // Пост не найден.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find post with id = " + id));
         }
+
+        final PostFullResponse postFull = new PostFullResponse(post);
+        if (related != null) {
+            if (related.contains("user")) {
+                postFull.setAuthor(userService.findUserById(post.getAuthorId()));
+            }
+            if (related.contains("forum")) {
+                postFull.setForum(forumService.findForumBySlug(post.getForum()));
+            }
+            if (related.contains("thread")) {
+                postFull.setThread(threadService.findThreadById(post.getThread()));
+            }
+        }
+        return ResponseEntity.ok(postFull);
     }
 
 
