@@ -184,16 +184,53 @@ public class PostService {
 
     // Посты в ветки
     // Сообщения выводятся отсортированные по дате создания.
-    public List<Post> threadPosts(String slugOrId) throws IndexOutOfBoundsException {
-        final Thread thread = threadService.findThreadBySlugOrId(slugOrId);     // Может выпасть IndexOutOfBoundsException - ветка не найдена
+    public List<Post> threadPostsFlat(String slugOrId, Long limit, Long since, Boolean isDesc)
+            throws IncorrectResultSizeDataAccessException {
+        final Thread thread = threadService.findThreadBySlugOrId(slugOrId);     // Может выпасть IncorrectResultSizeDataAccessException - ветка не найдена
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("thread_id", thread.getId());
+        params.addValue("forum", thread.getForum());
+        params.addValue("since", since);
+        params.addValue("limit", limit);
+        return template.query(
+                "SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, :forum forum, "
+                        + " P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id "
+                        + "FROM post P JOIN person U ON P.author_id = U.id "
+                        + "WHERE P.thread_id = :thread_id "
+                        + (since != null ? "AND P.id " + (isDesc ? '<' : '>') + " :since " : "")
+                        + "ORDER BY id " + (isDesc ? "DESC" : "ASC")
+                        + (limit != null ? " LIMIT :limit" : ""),
+                params, POST_MAPPER
+        );
+    }
+
+
+    // Посты в ветки
+    // Сообщения выводятся отсортированные по дате создания.
+    public List<Post> threadPostsTree(String slugOrId, Long limit, Long since, Boolean isDesc)
+            throws IncorrectResultSizeDataAccessException {
+        final Thread thread = threadService.findThreadBySlugOrId(slugOrId);     // Может выпасть IncorrectResultSizeDataAccessException - ветка не найдена
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("thread_id", thread.getId());
         params.addValue("forum", thread.getForum());
         return template.query(
-                "SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, :forum forum, "
-                        + "P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id "
-                        + "FROM post P JOIN person U ON P.author_id = U.id "
-                        + "WHERE P.thread_id = :thread_id ORDER BY created, id", params, POST_MAPPER
+                "WITH RECURSIVE recursetree (id, author, author_id, created, forum, is_edited, message, "
+                        + " parent, thread_id, path) AS ( "
+                        + " SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, :forum forum, "
+                        + "     P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id, "
+                        + "     array_append('{}'::int[], P.id) path "
+                        + " FROM post P JOIN person U ON P.author_id = U.id "
+                        + " WHERE parent = 0 AND P.thread_id = :thread_id "
+                        + "UNION ALL "
+                        + " SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, :forum forum, "
+                        + "     P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id, "
+                        + "     array_append('{}'::int[], P.id) path "
+                        + " FROM post P JOIN person U ON P.author_id = U.id JOIN recursetree RT ON RT.id = P.parent "
+                        + ") "
+                        + "SELECT * FROM recursetree "
+                        + "ORDER BY path " + (isDesc ? "DESC" : "ASC")
+                        + (limit != null ? " LIMIT :limit" : ""),
+                params, POST_MAPPER
         );
     }
 
