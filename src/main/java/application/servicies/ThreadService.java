@@ -80,9 +80,20 @@ public class ThreadService {
 
     // Обновление ветки обсуждения на форуме.
     public Thread update(String slugOrId, Thread body) throws IncorrectResultSizeDataAccessException {
+        if (body.getTitle() == null && body.getMessage() == null)
+            return findThreadBySlugOrId(slugOrId);
+
         final MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("title", body.getTitle());
-        params.addValue("message", body.getMessage());
+        final StringBuilder values = new StringBuilder();
+        if (body.getTitle() != null) {
+            params.addValue("title", body.getTitle());
+            values.append("title = :title, ");
+        }
+        if (body.getMessage() != null) {
+            params.addValue("message", body.getMessage());
+            values.append("message = :message, ");
+        }
+        values.setLength(values.length() - 2);  // Убираю ', '
 
         String condition;
         try {
@@ -93,8 +104,7 @@ public class ThreadService {
             condition = "LOWER(slug) = LOWER(:slug)";
         }
         return template.queryForObject(
-                "UPDATE thread SET title = :title, message = :message "
-                        + "WHERE " + condition + " RETURNING *, "
+                "UPDATE thread SET " + values + " WHERE " + condition + " RETURNING *, "
                         + "(SELECT nickname FROM person WHERE id = author_id) author, "
                         + "(SELECT slug FROM forum WHERE id = forum_id) forum", params, THREAD_MAPPER
         );
