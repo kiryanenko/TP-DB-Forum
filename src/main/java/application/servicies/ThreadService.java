@@ -79,26 +79,25 @@ public class ThreadService {
 
 
     // Обновление ветки обсуждения на форуме.
-    public Thread update(String slugOrId, Thread body) throws IndexOutOfBoundsException {
+    public Thread update(String slugOrId, Thread body) throws IncorrectResultSizeDataAccessException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("slug_or_id", slugOrId);
         params.addValue("title", body.getTitle());
         params.addValue("message", body.getMessage());
 
         String condition;
         try {
             params.addValue("id", Long.parseLong(slugOrId));
-            condition = "T.id = :id";
+            condition = "id = :id";
         } catch (NumberFormatException e) {
             params.addValue("slug", slugOrId);
-            condition = "T.slug = :slug";
+            condition = "LOWER(slug) = LOWER(:slug)";
         }
-        final List<Thread> res = template.query(
-                "UPDATE thread SET title = :title, message = :message " +
-                        "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
-                        "WHERE " + condition + " RETURNING *, nickname author, F.slug forum", params, THREAD_MAPPER
+        return template.queryForObject(
+                "UPDATE thread SET title = :title, message = :message "
+                        + "WHERE " + condition + " RETURNING *, "
+                        + "(SELECT nickname FROM person WHERE id = author_id) author, "
+                        + "(SELECT slug FROM forum WHERE id = forum_id) forum", params, THREAD_MAPPER
         );
-        return res.get(0);
     }
 
 
