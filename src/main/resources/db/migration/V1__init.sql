@@ -1,11 +1,8 @@
-CREATE EXTENSION IF NOT EXISTS CITEXT WITH SCHEMA public;
-
-
 CREATE TABLE person (
   id SERIAL PRIMARY KEY,
-  nickname CITEXT NOT NULL UNIQUE,
+  nickname TEXT COLLATE "ucs_basic" NOT NULL UNIQUE,
   fullname TEXT NOT NULL,
-  email CITEXT NOT NULL UNIQUE,
+  email TEXT NOT NULL UNIQUE,
   about TEXT
 );
 
@@ -16,13 +13,13 @@ CREATE UNIQUE INDEX idx_person_email ON person (LOWER(email));
 CREATE TABLE forum (
   id SERIAL PRIMARY KEY,
   posts INTEGER DEFAULT 0 CHECK (posts >= 0),
-  slug CITEXT NOT NULL UNIQUE,
+  slug TEXT NOT NULL UNIQUE,
   title TEXT NOT NULL,
   threads INTEGER DEFAULT 0,
   person_id INTEGER REFERENCES person(id) NOT NULL
 );
 
-CREATE INDEX idx_forum_slug ON forum (LOWER(slug));
+CREATE UNIQUE INDEX idx_forum_slug ON forum (LOWER(slug));
 
 CREATE FUNCTION inc_forum_threads() RETURNS TRIGGER AS $$
   BEGIN
@@ -38,7 +35,7 @@ CREATE TABLE thread (
   forum_id INTEGER REFERENCES forum(id) NOT NULL,
   title TEXT NOT NULL,
   message TEXT NOT NULL,
-  slug CITEXT NULL UNIQUE,
+  slug TEXT NULL UNIQUE,
   votes INTEGER DEFAULT 0,
   created TIMESTAMP NOT NULL DEFAULT now()
 );

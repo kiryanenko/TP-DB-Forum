@@ -106,12 +106,20 @@ public class UserService {
     // Получение списка пользователей, у которых есть пост или ветка обсуждения в данном форуме.
     // Пользователи выводятся отсортированные по nickname в порядке возрастания.
     // Порядок сотрировки должен соответсвовать побайтовому сравнение в нижнем регистре.
-    public List<User> forumUsers(String forumSlug) throws IncorrectResultSizeDataAccessException {
+    public List<User> forumUsers(String forumSlug, Long limit, String since, Boolean isDesc)
+            throws IncorrectResultSizeDataAccessException {
         final Long forumId = forumService.getForumIdWithSlug(forumSlug);
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("forum_id", forumId);
-        return template.query("SELECT U.id id, U.email email, U.nickname nickname, U.fullname fullname, U.about about "
-                + "FROM person U JOIN (thread T LEFT JOIN post P ON T.id = P.thread_id) ON U.id = T.author_id OR U.id = P.author_id "
-                + "WHERE T.forum_id = :forum_id ORDER BY nickname", params, USER_MAPPER);
+        params.addValue("since", since);
+        params.addValue("limit", limit);
+        return template.query(
+                "SELECT U.id id, U.email email, U.nickname nickname, U.fullname fullname, U.about about "
+                        + "FROM person U JOIN (thread T LEFT JOIN post P ON T.id = P.thread_id) ON U.id = T.author_id OR U.id = P.author_id "
+                        + "WHERE T.forum_id = :forum_id "
+                        + (since != null ? "AND LOWER(U.nickname) " + (isDesc ? "<" : ">") + " LOWER(:since) " : "")
+                        + "GROUP BY U.id "
+                        + "ORDER BY LOWER(U.nickname) " + (isDesc ? "DESC" : "ASC") + ' '
+                        + (limit != null ? "LIMIT :limit" : ""), params, USER_MAPPER);
     }
 }
