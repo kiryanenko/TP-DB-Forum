@@ -64,6 +64,8 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER add_thread AFTER INSERT ON thread FOR EACH ROW EXECUTE PROCEDURE inc_forum_threads();
 
 
+CREATE SEQUENCE posts_id_seq;
+
 CREATE TABLE post (
   id SERIAL PRIMARY KEY,
   author_id INTEGER REFERENCES person(id) NOT NULL,
@@ -71,7 +73,8 @@ CREATE TABLE post (
   parent INTEGER REFERENCES post(id) NULL DEFAULT NULL,
   message TEXT NOT NULL DEFAULT now(),
   created TIMESTAMP NOT NULL DEFAULT now(),
-  is_edited BOOLEAN NOT NULL DEFAULT FALSE
+  is_edited BOOLEAN NOT NULL DEFAULT FALSE,
+  path INTEGER[] NOT NULL
 );
 
 CREATE INDEX idx_post_thread_created_id ON post (thread_id, created, id);
