@@ -180,7 +180,7 @@ public class PostService {
             // Нахожу первый BodyTable.parent которого нет в постах ветки
             template.queryForObject("SELECT BodyTable.parent "
                     + "FROM (" + bodyTable + ") AS BodyTable LEFT JOIN post P ON BodyTable.parent = P.id "
-                    + "WHERE P.id IS NULL AND P.thread_id = :thread LIMIT 1", params, Long.class);
+                    + "WHERE P.id IS NULL OR P.thread_id != :thread LIMIT 1", params, Long.class);
             return false;
         } catch (EmptyResultDataAccessException e) {
             return true;
