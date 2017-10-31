@@ -86,6 +86,7 @@ public class ThreadController {
                 case "tree":
                     return ResponseEntity.ok(postService.threadPostsTree(slugOrId, limit, since, desc));
                 case "parent_tree":
+                    return ResponseEntity.ok(postService.threadPostsParentTree(slugOrId, limit, since, desc));
                 default:
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid sort parametr");
             }

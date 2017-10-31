@@ -213,6 +213,7 @@ public class PostService {
 
     // Посты в ветки
     // Сообщения выводятся отсортированные по дате создания.
+    // Древовидный, комментарии выводятся отсортированные в дереве по N штук
     public List<Post> threadPostsTree(String slugOrId, Long limit, Long since, Boolean isDesc)
             throws IncorrectResultSizeDataAccessException {
         final Thread thread = threadService.findThreadBySlugOrId(slugOrId);     // Может выпасть IncorrectResultSizeDataAccessException - ветка не найдена
@@ -226,9 +227,38 @@ public class PostService {
                         + " P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id "
                         + "FROM post P JOIN person U ON P.author_id = U.id "
                         + "WHERE P.thread_id = :thread_id "
-                        + (since != null ? "AND P.path " + (isDesc ? '<' : '>') + " (SELECT path FROM posts where id = :since) " : "")
+                        + (since != null ? "AND P.path " + (isDesc ? '<' : '>') + " (SELECT path FROM post WHERE id = :since) " : "")
                         + "ORDER BY P.path " + (isDesc ? "DESC" : "ASC")
                         + (limit != null ? " LIMIT :limit" : ""),
+                params, POST_MAPPER
+        );
+    }
+
+
+    // Посты в ветки
+    // Сообщения выводятся отсортированные по дате создания.
+    // Древовидные с пагинацией по родительским (parent_tree), на странице N родительских комментов
+    // и все комментарии прикрепленные к ним, в древвидном отображение.
+    public List<Post> threadPostsParentTree(String slugOrId, Long limit, Long since, Boolean isDesc)
+            throws IncorrectResultSizeDataAccessException {
+        final Thread thread = threadService.findThreadBySlugOrId(slugOrId);     // Может выпасть IncorrectResultSizeDataAccessException - ветка не найдена
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("thread_id", thread.getId());
+        params.addValue("forum", thread.getForum());
+        params.addValue("since", since);
+        params.addValue("limit", limit);
+        return template.query(
+                "WITH parent_path AS ("
+                        + " SELECT path FROM post "
+                        + " WHERE thread_id = :thread_id AND parent IS NULL "
+                        + (since != null ? "AND path " + (isDesc ? '<' : '>') + " (SELECT path FROM post WHERE id = :since)" : "")
+                        + " ORDER BY id " + (isDesc ? "DESC" : "ASC")
+                        + (limit != null ? " LIMIT :limit" : "")
+                        + ") "
+                        + "SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, :forum forum, "
+                        + " P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id "
+                        + "FROM post P JOIN person U ON P.author_id = U.id JOIN parent_path ON parent_path.path <@ P.path "
+                        + "ORDER BY P.path " + (isDesc ? "DESC" : "ASC"),
                 params, POST_MAPPER
         );
     }
