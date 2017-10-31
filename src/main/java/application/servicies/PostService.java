@@ -298,6 +298,10 @@ public class PostService {
     // Изменение сообщения на форуме.
     // Если сообщение поменяло текст, то оно должно получить отметку isEdited.
     public Post update(Long id, Post body) throws IncorrectResultSizeDataAccessException {
+        if (body.getMessage() == null) {
+            return findPostById(id);
+        }
+
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);
         params.addValue("message", body.getMessage());
