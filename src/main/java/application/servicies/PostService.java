@@ -156,7 +156,7 @@ public class PostService {
 
     // Проверяю наличие родителей для постов
     protected Boolean isPostsHasParents(Thread thread, List<Post> body) {
-        // Создаю фейкую таблицу с body
+        // Создаю фейковую таблицу с body
         final StringBuilder bodyTable = new StringBuilder();
         for (Post post : body) {
             if (post.getParent() != null) {
@@ -175,9 +175,9 @@ public class PostService {
             template.queryForObject("SELECT BodyTable.parent "
                     + "FROM (" + bodyTable + ") AS BodyTable LEFT JOIN post P ON BodyTable.parent = P.id "
                     + "WHERE P.id IS NULL AND P.thread_id = :thread LIMIT 1", params, Long.class);
-            return true;
-        } catch (EmptyResultDataAccessException e) {
             return false;
+        } catch (EmptyResultDataAccessException e) {
+            return true;
         }
     }
 

@@ -74,7 +74,9 @@ public class ThreadController {
 
     // Получение списка сообщений в данной ветке форуме..
     @GetMapping(path = "/posts", produces = "application/json")
-    public ResponseEntity posts(@PathVariable("slug_or_id") String slugOrId) {
+    public ResponseEntity posts(@PathVariable("slug_or_id") String slugOrId,
+                                @RequestParam(value="sort", required=false, defaultValue="flat") String sort,
+                                @RequestParam(value="limit", required=false) Long limit) {
         try {
             return ResponseEntity.ok(postService.threadPosts(slugOrId));
         } catch (IndexOutOfBoundsException e) {
