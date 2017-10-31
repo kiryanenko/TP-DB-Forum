@@ -19,7 +19,6 @@ public class Post {
     @JsonProperty("author")
     private String author;
 
-    @JsonProperty("author_id")
     private Long authorId;
 
     // Дата создания сообщения на форуме

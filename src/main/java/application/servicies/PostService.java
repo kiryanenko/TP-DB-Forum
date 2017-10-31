@@ -281,6 +281,20 @@ public class PostService {
     }
 
 
+    // Получение полной информации о сообщении, включая связанные объекты.
+    public Post findPostById(Long id) throws IncorrectResultSizeDataAccessException {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("id", id);
+        return template.queryForObject(
+                "SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, F.slug forum,"
+                        + " P.is_edited is_edited, P.message message, P.parent parent, P.thread_id thread_id "
+                        + "FROM post P JOIN person U ON P.author_id = U.id JOIN thread T ON P.thread_id = T.id"
+                        + " JOIN forum F ON T.forum_id = F.id "
+                        + "WHERE P.id = :id", params, POST_MAPPER
+        );
+    }
+
+
     // Изменение сообщения на форуме.
     // Если сообщение поменяло текст, то оно должно получить отметку isEdited.
     public Post update(Long id, Post body) throws IncorrectResultSizeDataAccessException {

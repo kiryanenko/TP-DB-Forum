@@ -74,6 +74,14 @@ public class UserService {
     }
 
 
+    // Получение информации о пользователе форума по его id.
+    public User findUserById(Long id) throws IncorrectResultSizeDataAccessException {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("id", id);
+        return template.queryForObject("SELECT * FROM person WHERE id = :id", params, USER_MAPPER);
+    }
+
+
     // Изменение информации в профиле пользователя.
     public User update(User credentials) throws DuplicateKeyException, IncorrectResultSizeDataAccessException {
         if (credentials.getFullname() == null &&
