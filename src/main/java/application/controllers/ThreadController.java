@@ -39,7 +39,7 @@ public class ThreadController {
     public ResponseEntity details(@PathVariable("slug_or_id") String slugOrId) {
         try {
             return ResponseEntity.ok(threadService.findThreadBySlugOrId(slugOrId));
-        } catch (IndexOutOfBoundsException e) {
+        } catch (IncorrectResultSizeDataAccessException e) {
             // Ветка обсуждения отсутсвует в системе.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find thread " + slugOrId));
         }
