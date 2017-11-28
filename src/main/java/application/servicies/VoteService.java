@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
-@Transactional
 public class VoteService {
     private final NamedParameterJdbcTemplate template;
     private ThreadService threadService;
