@@ -118,20 +118,26 @@ public class PostService {
             final User author = userService.findUserByNickname(body.get(i).getAuthor());   // Может выпасть IndexOutOfBoundsException - автор не найден
             authors.add(author);
 
+            final Integer id = template.queryForObject("SELECT nextval('posts_id_seq')",
+                    new MapSqlParameterSource(), Integer.class);
+
+            params.addValue("id_" + i, id);
             params.addValue("author_id_" + i, author.getId());
             params.addValue("thread_id_" + i, thread.getId());
             params.addValue("message_" + i, body.get(i).getMessage());
             params.addValue("parent_" + i, body.get(i).getParent());
 
-            values.append("(:author_id_").append(i).append(", ");
+            values.append("(:id_").append(i).append(", ");
+            values.append(":author_id_").append(i).append(", ");
             values.append(":thread_id_").append(i).append(", ");
             values.append(":message_").append(i).append(", ");
-            values.append(":parent_").append(i).append("), ");
+            values.append(":parent_").append(i).append(", ");
+            values.append("(SELECT path FROM post WHERE id = :parent_").append(i).append(") || :id_").append(i).append("), ");
         }
         values.setLength(values.length() - 2);
 
         template.update(
-                "INSERT INTO post(author_id, thread_id, message, parent) " +
+                "INSERT INTO post(id, author_id, thread_id, message, parent, path) " +
                 "VALUES " + values + " RETURNING id, created", params, keys
         );
         forumService.incForumPostsIncludedThread(thread.getId(), body.size());
@@ -174,7 +180,7 @@ public class PostService {
             // Нахожу первый BodyTable.parent которого нет в постах ветки
             template.queryForObject("SELECT BodyTable.parent "
                     + "FROM (" + bodyTable + ") AS BodyTable LEFT JOIN post P ON BodyTable.parent = P.id "
-                    + "WHERE P.id IS NULL AND P.thread_id = :thread LIMIT 1", params, Long.class);
+                    + "WHERE P.id IS NULL OR P.thread_id != :thread LIMIT 1", params, Long.class);
             return false;
         } catch (EmptyResultDataAccessException e) {
             return true;
@@ -184,16 +190,76 @@ public class PostService {
 
     // Посты в ветки
     // Сообщения выводятся отсортированные по дате создания.
-    public List<Post> threadPosts(String slugOrId) throws IndexOutOfBoundsException {
-        final Thread thread = threadService.findThreadBySlugOrId(slugOrId);     // Может выпасть IndexOutOfBoundsException - ветка не найдена
+    public List<Post> threadPostsFlat(String slugOrId, Long limit, Long since, Boolean isDesc)
+            throws IncorrectResultSizeDataAccessException {
+        final Thread thread = threadService.findThreadBySlugOrId(slugOrId);     // Может выпасть IncorrectResultSizeDataAccessException - ветка не найдена
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("thread_id", thread.getId());
         params.addValue("forum", thread.getForum());
+        params.addValue("since", since);
+        params.addValue("limit", limit);
         return template.query(
                 "SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, :forum forum, "
-                        + "P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id "
+                        + " P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id "
                         + "FROM post P JOIN person U ON P.author_id = U.id "
-                        + "WHERE P.thread_id = :thread_id ORDER BY created, id", params, POST_MAPPER
+                        + "WHERE P.thread_id = :thread_id "
+                        + (since != null ? "AND P.id " + (isDesc ? '<' : '>') + " :since " : "")
+                        + "ORDER BY id " + (isDesc ? "DESC" : "ASC")
+                        + (limit != null ? " LIMIT :limit" : ""),
+                params, POST_MAPPER
+        );
+    }
+
+
+    // Посты в ветки
+    // Сообщения выводятся отсортированные по дате создания.
+    // Древовидный, комментарии выводятся отсортированные в дереве по N штук
+    public List<Post> threadPostsTree(String slugOrId, Long limit, Long since, Boolean isDesc)
+            throws IncorrectResultSizeDataAccessException {
+        final Thread thread = threadService.findThreadBySlugOrId(slugOrId);     // Может выпасть IncorrectResultSizeDataAccessException - ветка не найдена
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("thread_id", thread.getId());
+        params.addValue("forum", thread.getForum());
+        params.addValue("since", since);
+        params.addValue("limit", limit);
+        return template.query(
+                "SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, :forum forum, "
+                        + " P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id "
+                        + "FROM post P JOIN person U ON P.author_id = U.id "
+                        + "WHERE P.thread_id = :thread_id "
+                        + (since != null ? "AND P.path " + (isDesc ? '<' : '>') + " (SELECT path FROM post WHERE id = :since) " : "")
+                        + "ORDER BY P.path " + (isDesc ? "DESC" : "ASC")
+                        + (limit != null ? " LIMIT :limit" : ""),
+                params, POST_MAPPER
+        );
+    }
+
+
+    // Посты в ветки
+    // Сообщения выводятся отсортированные по дате создания.
+    // Древовидные с пагинацией по родительским (parent_tree), на странице N родительских комментов
+    // и все комментарии прикрепленные к ним, в древвидном отображение.
+    public List<Post> threadPostsParentTree(String slugOrId, Long limit, Long since, Boolean isDesc)
+            throws IncorrectResultSizeDataAccessException {
+        final Thread thread = threadService.findThreadBySlugOrId(slugOrId);     // Может выпасть IncorrectResultSizeDataAccessException - ветка не найдена
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("thread_id", thread.getId());
+        params.addValue("forum", thread.getForum());
+        params.addValue("since", since);
+        params.addValue("limit", limit);
+        return template.query(
+                "WITH parent_path AS ("
+                        + " SELECT path FROM post "
+                        + " WHERE thread_id = :thread_id AND parent IS NULL "
+                        + (since != null ? "AND path " + (isDesc ? '<' : '>') + " (SELECT path FROM post WHERE id = :since)" : "")
+                        + " ORDER BY id " + (isDesc ? "DESC" : "ASC")
+                        + (limit != null ? " LIMIT :limit" : "")
+                        + ") "
+                        + "SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, :forum forum, "
+                        + " P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id "
+                        + "FROM post P JOIN person U ON P.author_id = U.id JOIN parent_path ON parent_path.path <@ P.path "
+                        + "ORDER BY P.path " + (isDesc ? "DESC" : "ASC"),
+                params, POST_MAPPER
         );
     }
 
@@ -215,9 +281,27 @@ public class PostService {
     }
 
 
+    // Получение полной информации о сообщении, включая связанные объекты.
+    public Post findPostById(Long id) throws IncorrectResultSizeDataAccessException {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("id", id);
+        return template.queryForObject(
+                "SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, F.slug forum,"
+                        + " P.is_edited is_edited, P.message message, P.parent parent, P.thread_id thread_id "
+                        + "FROM post P JOIN person U ON P.author_id = U.id JOIN thread T ON P.thread_id = T.id"
+                        + " JOIN forum F ON T.forum_id = F.id "
+                        + "WHERE P.id = :id", params, POST_MAPPER
+        );
+    }
+
+
     // Изменение сообщения на форуме.
     // Если сообщение поменяло текст, то оно должно получить отметку isEdited.
     public Post update(Long id, Post body) throws IncorrectResultSizeDataAccessException {
+        if (body.getMessage() == null) {
+            return findPostById(id);
+        }
+
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);
         params.addValue("message", body.getMessage());

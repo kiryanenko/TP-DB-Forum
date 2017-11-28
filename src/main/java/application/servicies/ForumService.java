@@ -70,7 +70,7 @@ public class ForumService {
     public Long getForumIdWithSlug(String slug) throws IncorrectResultSizeDataAccessException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("slug", slug);
-        return template.queryForObject("SELECT id FROM forum WHERE slug=:slug", params, Long.class);
+        return template.queryForObject("SELECT id FROM forum WHERE LOWER(slug) = LOWER(:slug)", params, Long.class);
     }
 
 

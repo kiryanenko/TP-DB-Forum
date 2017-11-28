@@ -39,7 +39,7 @@ public class ThreadController {
     public ResponseEntity details(@PathVariable("slug_or_id") String slugOrId) {
         try {
             return ResponseEntity.ok(threadService.findThreadBySlugOrId(slugOrId));
-        } catch (IndexOutOfBoundsException e) {
+        } catch (IncorrectResultSizeDataAccessException e) {
             // Ветка обсуждения отсутсвует в системе.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find thread " + slugOrId));
         }
@@ -51,7 +51,7 @@ public class ThreadController {
     public ResponseEntity update(@RequestBody Thread body, @PathVariable("slug_or_id") String slugOrId) {
         try {
             return ResponseEntity.ok(threadService.update(slugOrId, body));
-        } catch (IndexOutOfBoundsException e) {
+        } catch (IncorrectResultSizeDataAccessException e) {
             // Ветка обсуждения отсутсвует в системе.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find thread " + slugOrId));
         }
@@ -75,11 +75,22 @@ public class ThreadController {
     // Получение списка сообщений в данной ветке форуме..
     @GetMapping(path = "/posts", produces = "application/json")
     public ResponseEntity posts(@PathVariable("slug_or_id") String slugOrId,
+                                @RequestParam(value="limit", required=false) Long limit,
+                                @RequestParam(value="since", required=false) Long since,
                                 @RequestParam(value="sort", required=false, defaultValue="flat") String sort,
-                                @RequestParam(value="limit", required=false) Long limit) {
+                                @RequestParam(value="desc", required=false, defaultValue="false") Boolean desc) {
         try {
-            return ResponseEntity.ok(postService.threadPosts(slugOrId));
-        } catch (IndexOutOfBoundsException e) {
+            switch (sort) {
+                case "flat":
+                    return ResponseEntity.ok(postService.threadPostsFlat(slugOrId, limit, since, desc));
+                case "tree":
+                    return ResponseEntity.ok(postService.threadPostsTree(slugOrId, limit, since, desc));
+                case "parent_tree":
+                    return ResponseEntity.ok(postService.threadPostsParentTree(slugOrId, limit, since, desc));
+                default:
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid sort parametr");
+            }
+        } catch (IncorrectResultSizeDataAccessException e) {
             // Ветка обсуждения отсутсвует в системе.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find thread " + slugOrId));
         }

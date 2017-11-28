@@ -112,10 +112,13 @@ public class ForumController {
 
 
     // Получение списка пользователей, у которых есть пост или ветка обсуждения в данном форуме.
-    @GetMapping(path = "/{slug}/users", consumes = "application/json", produces = "application/json")
-    public ResponseEntity forumUsers(@PathVariable String slug) {
+    @GetMapping(path = "/{slug}/users", produces = "application/json")
+    public ResponseEntity forumUsers(@PathVariable String slug,
+                                     @RequestParam(value="limit", required=false) Long limit,
+                                     @RequestParam(value="since", required=false) String since,
+                                     @RequestParam(value="desc", required=false, defaultValue="false") Boolean desc) {
         try {
-            return ResponseEntity.ok(userService.forumUsers(slug));
+            return ResponseEntity.ok(userService.forumUsers(slug, limit, since, desc));
         } catch (IncorrectResultSizeDataAccessException e) {
             // Форум не найден.
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find forum " + slug));
