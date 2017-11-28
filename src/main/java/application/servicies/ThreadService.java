@@ -20,7 +20,6 @@ import java.util.List;
 
 
 @Service
-@Transactional
 public class ThreadService {
     private final NamedParameterJdbcTemplate template;
     private final UserService userService;
