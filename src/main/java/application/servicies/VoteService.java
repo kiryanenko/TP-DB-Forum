@@ -18,7 +18,7 @@ public class VoteService {
 
 
     @Autowired
-    public VoteService(NamedParameterJdbcTemplate template, UserService userService, ThreadService threadService) {
+    public VoteService(NamedParameterJdbcTemplate template, ThreadService threadService) {
         this.template = template;
         this.threadService = threadService;
     }
