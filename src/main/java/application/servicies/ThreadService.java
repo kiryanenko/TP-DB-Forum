@@ -55,14 +55,17 @@ public class ThreadService {
 
         final GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("author", author.getNickname());
         params.addValue("author_id", author.getId());
+        params.addValue("forum", forum.getSlug());
         params.addValue("forum_id", forum.getId());
         params.addValue("title", body.getTitle());
         params.addValue("slug", body.getSlug());
         params.addValue("created", body.getCreated() == null ? new Date() : body.getCreated());
         params.addValue("message", body.getMessage());
-        template.update("INSERT INTO thread(author_id, forum_id, title, created, message, slug) " +
-                "VALUES (:author_id, :forum_id, :title, :created, :message, :slug) RETURNING id", params, keyHolder);
+        template.update("INSERT INTO thread(author, author_id, forum, forum_id, title, created, message, slug) " +
+                "VALUES (:author, :author_id, :forum, :forum_id, :title, :created, :message, :slug) RETURNING id",
+                params, keyHolder);
         // Форум успешно создан. Возвращает данные созданного форума.
         return new Thread(keyHolder.getKey().longValue(),
                           author.getNickname(),
@@ -113,22 +116,15 @@ public class ThreadService {
     public Thread findThreadById(Long id) throws IncorrectResultSizeDataAccessException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);
-        return template.queryForObject(
-                "SELECT T.id id, P.nickname author, author_id, created, F.slug forum, forum_id, message, T.slug slug, T.title title, votes " +
-                        "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
-                        "WHERE T.id = :id", params, THREAD_MAPPER
-        );
+        return template.queryForObject("SELECT * FROM thread T WHERE T.id = :id", params, THREAD_MAPPER);
     }
 
 
     public Thread findThreadBySlug(String slug) throws IncorrectResultSizeDataAccessException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("slug", slug);
-        return template.queryForObject(
-                "SELECT T.id id, P.nickname author, author_id, created, F.slug forum, forum_id, message, T.slug slug, T.title title, votes " +
-                        "FROM thread T JOIN person P ON P.id = author_id JOIN forum F ON F.id = forum_id " +
-                        "WHERE LOWER(T.slug) = LOWER(:slug)", params, THREAD_MAPPER
-        );
+        return template.queryForObject("SELECT * FROM thread T WHERE LOWER(T.slug) = LOWER(:slug)",
+                params, THREAD_MAPPER);
     }
 
 

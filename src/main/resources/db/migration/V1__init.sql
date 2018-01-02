@@ -31,7 +31,9 @@ $$ LANGUAGE plpgsql;
 
 CREATE TABLE thread (
   id SERIAL PRIMARY KEY,
+  author TEXT COLLATE "ucs_basic" NOT NULL,
   author_id INTEGER REFERENCES person(id) NOT NULL,
+  forum TEXT NOT NULL,
   forum_id INTEGER REFERENCES forum(id) NOT NULL,
   title TEXT NOT NULL,
   message TEXT NOT NULL,
