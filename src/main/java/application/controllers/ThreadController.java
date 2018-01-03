@@ -104,9 +104,7 @@ public class ThreadController {
             return ResponseEntity.ok(voteService.vote(slugOrId, body));
         } catch (IncorrectResultSizeDataAccessException e) {
             // Ветка обсуждения отсутсвует в системе.
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find thread " + slugOrId));
-        } catch (DataIntegrityViolationException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find user " + body.getNickname()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Can't find thread or user"));
         }
     }
 }

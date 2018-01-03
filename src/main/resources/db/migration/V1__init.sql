@@ -87,7 +87,7 @@ CREATE TABLE vote (
   voice SMALLINT NOT NULL CHECK (voice = 1 OR voice = -1)
 );
 
-CREATE UNIQUE INDEX idx_vote_person_thread ON vote (thread_id, person_id);
+CREATE INDEX idx_vote_person_thread ON vote (thread_id, person_id, id, voice);
 
 CREATE TRIGGER add_vote AFTER INSERT ON vote FOR EACH ROW EXECUTE PROCEDURE inc_thread_votes();
 CREATE TRIGGER set_vote AFTER UPDATE ON vote FOR EACH ROW EXECUTE PROCEDURE set_thread_votes();
