@@ -5,10 +5,9 @@ MAINTAINER Kiryanenko Alexander
 # Обвновление списка пакетов
 RUN apt-get -y update
 
-#
 # Установка postgresql
-#
-RUN apt-get install -y postgresql
+ENV PGVER 9.5
+RUN apt-get install -y postgresql-$PGVER
 
 # Run the rest of the commands as the ``postgres`` user created by the ``postgres-$PGVER`` package when it was ``apt-get installed``
 USER postgres
