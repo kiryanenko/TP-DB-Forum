@@ -81,6 +81,7 @@ CREATE INDEX idx_post_forum_author ON post (thread_id, author_id);
 
 
 CREATE TABLE vote (
+  id SERIAL PRIMARY KEY,
   person_id INTEGER REFERENCES person(id) NOT NULL,
   thread_id INTEGER REFERENCES thread(id) NOT NULL,
   voice SMALLINT NOT NULL CHECK (voice = 1 OR voice = -1)

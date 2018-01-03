@@ -6,9 +6,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 // Информация о голосовании пользователя.
 public class Vote {
+    // Идентификатор голоса.
+    private Long id;
     // Идентификатор ветки обсуждения.
     private Long threadId;
-
+    // Идентификатор ветки пользователя.
     private Long userId;
 
     // Идентификатор пользователя.
@@ -32,6 +34,13 @@ public class Vote {
         this.voice = voice;
     }
 
+
+    public Vote(Long id, Long threadId, Long userId, Integer voice) {
+        this.id = id;
+        this.threadId = threadId;
+        this.userId = userId;
+        this.voice = voice;
+    }
 
     public Long getThreadId() {
         return threadId;
@@ -63,5 +72,9 @@ public class Vote {
 
     public void setVoice(Integer voice) {
         this.voice = voice;
+    }
+
+    public Long getId() {
+        return id;
     }
 }
