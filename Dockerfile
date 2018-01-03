@@ -20,6 +20,9 @@ RUN /etc/init.d/postgresql start &&\
     createdb -E utf8 -T template0 -O forum forum &&\
     /etc/init.d/postgresql stop
 
+RUN echo "synchronous_commit = off" >> /etc/postgresql/$PGVER/main/postgresql.conf
+RUN echo "fsync = off" >> /etc/postgresql/$PGVER/main/postgresql.conf
+
 # Expose the PostgreSQL port
 EXPOSE 5432
 
