@@ -106,9 +106,7 @@ public class ThreadService {
             condition = "LOWER(slug) = LOWER(:slug)";
         }
         return template.queryForObject(
-                "UPDATE thread SET " + values + " WHERE " + condition + " RETURNING *, "
-                        + "(SELECT nickname FROM person WHERE id = author_id) author, "
-                        + "(SELECT slug FROM forum WHERE id = forum_id) forum", params, THREAD_MAPPER
+                "UPDATE thread SET " + values + " WHERE " + condition + " RETURNING * ", params, THREAD_MAPPER
         );
     }
 
@@ -157,9 +155,7 @@ public class ThreadService {
         params.addValue("since", since);
         params.addValue("limit", limit);
         return template.query(
-                "SELECT T.id id, P.nickname author, T.author_id author_id, T.created created, :forum_slug forum, "
-                        + ":forum_id forum_id, T.message message, T.slug slug, T.title title, T.votes votes "
-                        + "FROM thread T JOIN person P ON P.id = author_id "
+                "SELECT * FROM thread T "
                         + "WHERE T.forum_id = :forum_id "
                         + (since != null ? "AND created " + (isDesc ? "<=" : ">=") + " :since " : "")
                         + "ORDER BY created " + (isDesc ? "DESC" : "ASC")
