@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS forum_person (
   UNIQUE (person_id, forum_id)
 );
 
-CREATE INDEX idx_thread_forum ON forum_person (forum_id);
+CREATE INDEX idx_forum_person ON forum_person (forum_id);
 
 
 CREATE TABLE thread (
