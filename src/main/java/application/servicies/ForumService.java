@@ -20,8 +20,6 @@ import java.util.List;
 @Transactional
 public class ForumService {
     private final NamedParameterJdbcTemplate template;
-    @Autowired
-    private UserService userService;
 
 
     @Autowired
@@ -43,14 +41,13 @@ public class ForumService {
 
     // Создание нового форума.
     public Forum create(Forum body) throws DataIntegrityViolationException, DuplicateKeyException {
-        final GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("slug", body.getSlug());
         params.addValue("title", body.getTitle());
         params.addValue("user", body.getUserNickname());
         return template.queryForObject("WITH get_user AS (SELECT id, nickname FROM person WHERE LOWER(nickname) = LOWER(:user)) "
-                + "INSERT INTO forum(slug, person_id, title) "
-                + "VALUES (:slug, (SELECT id FROM get_user), :title) RETURNING *, (SELECT nickname FROM get_user) person_nickname",
+                + "INSERT INTO forum(slug, person_id, person_nickname, title) "
+                + "VALUES (:slug, (SELECT id FROM get_user), (SELECT nickname FROM get_user), :title) RETURNING *",
                 params, FORUM_MAPPER);
     }
 
@@ -60,8 +57,7 @@ public class ForumService {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("slug", slug);
         return template.queryForObject(
-                "SELECT F.id id, F.slug slug, F.person_id person_id, F.title title, P.nickname person_nickname, F.posts posts, F.threads threads "
-                        + "FROM forum F JOIN person P ON P.id = person_id WHERE LOWER(F.slug) = LOWER(:slug)",
+                "SELECT * FROM forum F WHERE LOWER(F.slug) = LOWER(:slug)",
                 params, FORUM_MAPPER);
     }
 

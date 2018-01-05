@@ -16,6 +16,7 @@ CREATE TABLE forum (
   slug TEXT NOT NULL UNIQUE,
   title TEXT NOT NULL,
   threads INTEGER DEFAULT 0,
+  person_nickname TEXT REFERENCES person(nickname) NOT NULL,
   person_id INTEGER REFERENCES person(id) NOT NULL
 );
 
