@@ -79,8 +79,9 @@ CREATE TABLE post (
   path INTEGER[] NOT NULL
 );
 
-CREATE INDEX idx_post_thread_created_id ON post (thread_id, created, id);
 CREATE INDEX idx_post_forum_author ON post (thread_id, author_id);
+CREATE INDEX idx_post_roots ON post (thread_id, path) WHERE parent IS NULL;
+CREATE INDEX idx_post_path ON post (path);
 
 
 CREATE TABLE vote (

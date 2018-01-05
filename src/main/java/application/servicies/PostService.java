@@ -230,14 +230,14 @@ public class PostService {
         params.addValue("since", since);
         params.addValue("limit", limit);
         return template.query(
-                "WITH parent_path AS ("
-                        + " SELECT path FROM post "
+                "WITH roots AS ("
+                        + " SELECT path[1] root FROM post "
                         + " WHERE thread_id = :thread_id AND parent IS NULL "
                         + (since != null ? "AND path " + (isDesc ? '<' : '>') + " (SELECT path FROM post WHERE id = :since)" : "")
                         + " ORDER BY id " + (isDesc ? "DESC" : "ASC")
                         + (limit != null ? " LIMIT :limit" : "")
                         + ") "
-                        + "SELECT * FROM post P JOIN parent_path ON parent_path.path <@ P.path "
+                        + "SELECT P.* FROM post P JOIN roots ON roots.root = P.path[1] "
                         + "ORDER BY P.path " + (isDesc ? "DESC" : "ASC"),
                 params, POST_MAPPER
         );
