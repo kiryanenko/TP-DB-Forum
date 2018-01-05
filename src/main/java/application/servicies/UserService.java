@@ -121,12 +121,19 @@ public class UserService {
         params.addValue("since", since);
         params.addValue("limit", limit);
         return template.query(
-                "SELECT U.id id, U.email email, U.nickname nickname, U.fullname fullname, U.about about "
-                        + "FROM person U JOIN (thread T LEFT JOIN post P ON T.id = P.thread_id) ON U.id = T.author_id OR U.id = P.author_id "
-                        + "WHERE T.forum_id = :forum_id "
-                        + (since != null ? "AND LOWER(U.nickname) " + (isDesc ? "<" : ">") + " LOWER(:since) " : "")
-                        + "GROUP BY U.id "
-                        + "ORDER BY LOWER(U.nickname) " + (isDesc ? "DESC" : "ASC") + ' '
+                "SELECT U.* FROM person U JOIN forum_person FP ON U.id = FP.person_id "
+                        + "WHERE FP.forum_id = :forum_id "
+                        + (since != null ? "AND LOWER(U.nickname) " + (isDesc ? "<" : ">") + " LOWER(:since)" : "")
+                        + " ORDER BY LOWER(U.nickname) " + (isDesc ? "DESC" : "ASC") + ' '
                         + (limit != null ? "LIMIT :limit" : ""), params, USER_MAPPER);
+    }
+
+
+    public void addForumUser(Long userId, Long forumId) {
+        final MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("forum_id", forumId);
+        params.addValue("person_id", userId);
+        template.update("INSERT INTO forum_person(person_id, forum_id) VALUES (:person_id, :forum_id) "
+                + "ON CONFLICT (person_id, forum_id) DO NOTHING", params);
     }
 }

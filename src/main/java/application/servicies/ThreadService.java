@@ -66,6 +66,7 @@ public class ThreadService {
         template.update("INSERT INTO thread(author, author_id, forum, forum_id, title, created, message, slug) " +
                 "VALUES (:author, :author_id, :forum, :forum_id, :title, :created, :message, :slug) RETURNING id",
                 params, keyHolder);
+        userService.addForumUser(author.getId(), forum.getId());
         // Форум успешно создан. Возвращает данные созданного форума.
         return new Thread(keyHolder.getKey().longValue(),
                           author.getNickname(),

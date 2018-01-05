@@ -30,6 +30,15 @@ CREATE FUNCTION inc_forum_threads() RETURNS TRIGGER AS $$
 $$ LANGUAGE plpgsql;
 
 
+CREATE TABLE IF NOT EXISTS forum_person (
+  person_id INTEGER REFERENCES person(id) NOT NULL,
+  forum_id INTEGER REFERENCES forum(id) NOT NULL,
+  UNIQUE (person_id, forum_id)
+);
+
+CREATE INDEX idx_thread_forum ON forum_person (forum_id);
+
+
 CREATE TABLE thread (
   id SERIAL PRIMARY KEY,
   author TEXT REFERENCES person(nickname) NOT NULL,
@@ -44,7 +53,6 @@ CREATE TABLE thread (
 );
 
 CREATE INDEX idx_thread_forum ON thread (forum_id, created);
-CREATE INDEX idx_thread_forum_author ON thread (forum_id, author_id);
 CREATE UNIQUE INDEX idx_thread_slug ON thread (LOWER(slug));
 
 CREATE FUNCTION inc_thread_votes() RETURNS TRIGGER AS $$
@@ -71,7 +79,8 @@ CREATE TABLE post (
   author TEXT REFERENCES person(nickname) NOT NULL,
   author_id INTEGER REFERENCES person(id) NOT NULL,
   thread_id INTEGER REFERENCES thread(id) NOT NULL,
-  forum TEXT REFERENCES forum(slug)  NOT NULL,
+  forum_id INTEGER REFERENCES forum(id) NOT NULL,
+  forum TEXT REFERENCES forum(slug) NOT NULL,
   parent INTEGER REFERENCES post(id) NULL DEFAULT NULL,
   message TEXT NOT NULL DEFAULT now(),
   created TIMESTAMP NOT NULL DEFAULT now(),
@@ -79,7 +88,6 @@ CREATE TABLE post (
   path INTEGER[] NOT NULL
 );
 
-CREATE INDEX idx_post_forum_author ON post (thread_id, author_id);
 CREATE INDEX idx_post_roots ON post (thread_id, path) WHERE parent IS NULL;
 CREATE INDEX idx_post_path ON post (path);
 

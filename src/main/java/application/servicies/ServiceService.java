@@ -30,7 +30,7 @@ public class ServiceService {
 
     // Безвозвратное удаление всей пользовательской информации из базы данных.
     public void clear() {
-        template.update("TRUNCATE person, forum, post, thread, vote", new MapSqlParameterSource());
+        template.update("TRUNCATE person, forum, post, thread, vote, forum_person", new MapSqlParameterSource());
     }
 
 

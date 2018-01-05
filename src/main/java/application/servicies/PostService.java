@@ -114,6 +114,7 @@ public class PostService {
 
         for (Integer i = 0; i < body.size(); ++i) {
             final User author = userService.findUserByNickname(body.get(i).getAuthor());   // Может выпасть IndexOutOfBoundsException - автор не найден
+            userService.addForumUser(author.getId(), thread.getForumId());
 
             final Integer id = template.queryForObject("SELECT nextval('posts_id_seq')",
                     new MapSqlParameterSource(), Integer.class);
@@ -122,6 +123,7 @@ public class PostService {
             params.addValue("author_id_" + i, author.getId());
             params.addValue("author_" + i, author.getNickname());
             params.addValue("thread_id_" + i, thread.getId());
+            params.addValue("forum_id_" + i, thread.getForumId());
             params.addValue("forum_" + i, thread.getForum());
             params.addValue("message_" + i, body.get(i).getMessage());
             params.addValue("parent_" + i, body.get(i).getParent());
@@ -130,6 +132,7 @@ public class PostService {
             values.append(":author_id_").append(i).append(", ");
             values.append(":author_").append(i).append(", ");
             values.append(":thread_id_").append(i).append(", ");
+            values.append(":forum_id_").append(i).append(", ");
             values.append(":forum_").append(i).append(", ");
             values.append(":message_").append(i).append(", ");
             values.append(":parent_").append(i).append(", ");
@@ -138,7 +141,7 @@ public class PostService {
         values.setLength(values.length() - 2);
 
         final List<Post> results = template.query(
-                "INSERT INTO post(id, author_id, author, thread_id, forum, message, parent, path) " +
+                "INSERT INTO post(id, author_id, author, thread_id, forum_id, forum, message, parent, path) " +
                 "VALUES " + values + " RETURNING *", params, POST_MAPPER
         );
         forumService.incForumPostsIncludedThread(thread.getId(), body.size());
