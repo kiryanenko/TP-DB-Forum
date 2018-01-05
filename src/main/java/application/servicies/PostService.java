@@ -21,7 +21,6 @@ import java.util.List;
 
 
 @Service
-@Transactional
 public class PostService {
     private final NamedParameterJdbcTemplate template;
     private final UserService userService;
@@ -110,52 +109,39 @@ public class PostService {
             throw new NoParentPostException();
         }
 
-        final GeneratedKeyHolder keys = new GeneratedKeyHolder();
         final MapSqlParameterSource params = new MapSqlParameterSource();
         final StringBuilder values = new StringBuilder();
-        final List<User> authors = new ArrayList<>();
+
         for (Integer i = 0; i < body.size(); ++i) {
             final User author = userService.findUserByNickname(body.get(i).getAuthor());   // Может выпасть IndexOutOfBoundsException - автор не найден
-            authors.add(author);
 
             final Integer id = template.queryForObject("SELECT nextval('posts_id_seq')",
                     new MapSqlParameterSource(), Integer.class);
 
             params.addValue("id_" + i, id);
             params.addValue("author_id_" + i, author.getId());
+            params.addValue("author_" + i, author.getNickname());
             params.addValue("thread_id_" + i, thread.getId());
+            params.addValue("forum_" + i, thread.getForum());
             params.addValue("message_" + i, body.get(i).getMessage());
             params.addValue("parent_" + i, body.get(i).getParent());
 
             values.append("(:id_").append(i).append(", ");
             values.append(":author_id_").append(i).append(", ");
+            values.append(":author_").append(i).append(", ");
             values.append(":thread_id_").append(i).append(", ");
+            values.append(":forum_").append(i).append(", ");
             values.append(":message_").append(i).append(", ");
             values.append(":parent_").append(i).append(", ");
             values.append("(SELECT path FROM post WHERE id = :parent_").append(i).append(") || :id_").append(i).append("), ");
         }
         values.setLength(values.length() - 2);
 
-        template.update(
-                "INSERT INTO post(id, author_id, thread_id, message, parent, path) " +
-                "VALUES " + values + " RETURNING id, created", params, keys
+        final List<Post> results = template.query(
+                "INSERT INTO post(id, author_id, author, thread_id, forum, message, parent, path) " +
+                "VALUES " + values + " RETURNING *", params, POST_MAPPER
         );
         forumService.incForumPostsIncludedThread(thread.getId(), body.size());
-
-        final List<Post> results = new ArrayList<>();
-        for (Integer i = 0; i < body.size(); ++i) {
-            results.add(new Post(
-                    ((Integer) keys.getKeyList().get(i).get("id")).longValue(),
-                    authors.get(i).getNickname(),
-                    authors.get(i).getId(),
-                    (Timestamp) keys.getKeyList().get(i).get("created"),
-                    thread.getForum(),
-                    false,
-                    body.get(i).getMessage(),
-                    body.get(i).getParent(),
-                    thread.getId()
-            ));
-        }
         return results;
     }
 
@@ -199,9 +185,7 @@ public class PostService {
         params.addValue("since", since);
         params.addValue("limit", limit);
         return template.query(
-                "SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, :forum forum, "
-                        + " P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id "
-                        + "FROM post P JOIN person U ON P.author_id = U.id "
+                "SELECT * FROM post P "
                         + "WHERE P.thread_id = :thread_id "
                         + (since != null ? "AND P.id " + (isDesc ? '<' : '>') + " :since " : "")
                         + "ORDER BY id " + (isDesc ? "DESC" : "ASC")
@@ -223,9 +207,7 @@ public class PostService {
         params.addValue("since", since);
         params.addValue("limit", limit);
         return template.query(
-                "SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, :forum forum, "
-                        + " P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id "
-                        + "FROM post P JOIN person U ON P.author_id = U.id "
+                "SELECT * FROM post P "
                         + "WHERE P.thread_id = :thread_id "
                         + (since != null ? "AND P.path " + (isDesc ? '<' : '>') + " (SELECT path FROM post WHERE id = :since) " : "")
                         + "ORDER BY P.path " + (isDesc ? "DESC" : "ASC")
@@ -255,9 +237,7 @@ public class PostService {
                         + " ORDER BY id " + (isDesc ? "DESC" : "ASC")
                         + (limit != null ? " LIMIT :limit" : "")
                         + ") "
-                        + "SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, :forum forum, "
-                        + " P.is_edited is_edited, P.message message, P.parent parent, :thread_id thread_id "
-                        + "FROM post P JOIN person U ON P.author_id = U.id JOIN parent_path ON parent_path.path <@ P.path "
+                        + "SELECT * FROM post P JOIN parent_path ON parent_path.path <@ P.path "
                         + "ORDER BY P.path " + (isDesc ? "DESC" : "ASC"),
                 params, POST_MAPPER
         );
@@ -285,13 +265,7 @@ public class PostService {
     public Post findPostById(Long id) throws IncorrectResultSizeDataAccessException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);
-        return template.queryForObject(
-                "SELECT P.id id, U.nickname author, P.author_id author_id, P.created created, F.slug forum,"
-                        + " P.is_edited is_edited, P.message message, P.parent parent, P.thread_id thread_id "
-                        + "FROM post P JOIN person U ON P.author_id = U.id JOIN thread T ON P.thread_id = T.id"
-                        + " JOIN forum F ON T.forum_id = F.id "
-                        + "WHERE P.id = :id", params, POST_MAPPER
-        );
+        return template.queryForObject("SELECT * FROM post P WHERE P.id = :id", params, POST_MAPPER);
     }
 
 

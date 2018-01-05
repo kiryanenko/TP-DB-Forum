@@ -68,8 +68,10 @@ CREATE SEQUENCE posts_id_seq;
 
 CREATE TABLE post (
   id SERIAL PRIMARY KEY,
+  author TEXT REFERENCES person(nickname) NOT NULL,
   author_id INTEGER REFERENCES person(id) NOT NULL,
   thread_id INTEGER REFERENCES thread(id) NOT NULL,
+  forum TEXT REFERENCES forum(slug)  NOT NULL,
   parent INTEGER REFERENCES post(id) NULL DEFAULT NULL,
   message TEXT NOT NULL DEFAULT now(),
   created TIMESTAMP NOT NULL DEFAULT now(),

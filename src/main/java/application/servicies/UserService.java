@@ -15,7 +15,6 @@ import java.util.List;
 
 
 @Service
-@Transactional
 public class UserService {
     private final NamedParameterJdbcTemplate template;
     @Autowired
