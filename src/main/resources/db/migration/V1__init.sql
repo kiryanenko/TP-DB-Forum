@@ -88,7 +88,7 @@ CREATE TABLE post (
   path INTEGER[] NOT NULL
 );
 
-CREATE INDEX idx_post_roots ON post (thread_id, path) WHERE parent IS NULL;
+CREATE INDEX idx_post_roots ON post (thread_id, path, id) WHERE parent IS NULL;
 CREATE INDEX idx_post_path ON post (path);
 
 
