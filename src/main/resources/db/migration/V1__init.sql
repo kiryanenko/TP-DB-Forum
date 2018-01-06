@@ -90,8 +90,10 @@ CREATE TABLE post (
 );
 
 CREATE INDEX idx_post_roots ON post (thread_id, path, id) WHERE parent IS NULL;
-CREATE INDEX idx_post_thread ON post (thread_id, path);
+CREATE INDEX idx_post_thread_path ON post (thread_id, path, id);
+CREATE INDEX idx_post_thread ON post (thread_id, id);
 CREATE INDEX idx_post_root ON post (root, path);
+CREATE INDEX idx_post_id ON post (id, path);
 
 
 CREATE TABLE vote (

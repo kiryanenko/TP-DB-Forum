@@ -21,8 +21,6 @@ RUN /etc/init.d/postgresql start &&\
 
 RUN echo "synchronous_commit = off" >> /etc/postgresql/$PGVER/main/postgresql.conf
 RUN echo "fsync = off" >> /etc/postgresql/$PGVER/main/postgresql.conf
-RUN echo "full_page_writes = off" >> /etc/postgresql/$PGVER/main/postgresql.conf
-RUN echo "wal_buffers = 3MB" >> /etc/postgresql/$PGVER/main/postgresql.conf
 
 # Expose the PostgreSQL port
 EXPOSE 5432
