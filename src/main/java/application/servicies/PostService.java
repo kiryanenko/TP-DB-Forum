@@ -136,12 +136,13 @@ public class PostService {
             values.append(":forum_").append(i).append(", ");
             values.append(":message_").append(i).append(", ");
             values.append(":parent_").append(i).append(", ");
+            values.append("((SELECT path FROM post WHERE id = :parent_").append(i).append(") || :id_").append(i).append(")[1], ");
             values.append("(SELECT path FROM post WHERE id = :parent_").append(i).append(") || :id_").append(i).append("), ");
         }
         values.setLength(values.length() - 2);
 
         final List<Post> results = template.query(
-                "INSERT INTO post(id, author_id, author, thread_id, forum_id, forum, message, parent, path) " +
+                "INSERT INTO post(id, author_id, author, thread_id, forum_id, forum, message, parent, root, path) " +
                 "VALUES " + values + " RETURNING *", params, POST_MAPPER
         );
         forumService.incForumPostsIncludedThread(thread.getId(), body.size());
@@ -240,7 +241,7 @@ public class PostService {
                         + " ORDER BY id " + (isDesc ? "DESC" : "ASC")
                         + (limit != null ? " LIMIT :limit" : "")
                         + ") "
-                        + "SELECT P.* FROM post P JOIN roots ON roots.id = P.path[1] "
+                        + "SELECT P.* FROM post P JOIN roots ON roots.id = P.root "
                         + "ORDER BY P.path " + (isDesc ? "DESC" : "ASC"),
                 params, POST_MAPPER
         );

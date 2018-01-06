@@ -82,6 +82,7 @@ CREATE TABLE post (
   forum_id INTEGER REFERENCES forum(id) NOT NULL,
   forum TEXT REFERENCES forum(slug) NOT NULL,
   parent INTEGER REFERENCES post(id) NULL DEFAULT NULL,
+  root INTEGER REFERENCES post(id) NULL DEFAULT NULL,
   message TEXT NOT NULL DEFAULT now(),
   created TIMESTAMP NOT NULL DEFAULT now(),
   is_edited BOOLEAN NOT NULL DEFAULT FALSE,
@@ -90,7 +91,7 @@ CREATE TABLE post (
 
 CREATE INDEX idx_post_roots ON post (thread_id, path, id) WHERE parent IS NULL;
 CREATE INDEX idx_post_thread ON post (thread_id, path);
-CREATE INDEX idx_post_path ON post (path);
+CREATE INDEX idx_post_root ON post (root, path);
 
 
 CREATE TABLE vote (
