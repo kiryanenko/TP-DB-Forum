@@ -237,12 +237,12 @@ public class PostService {
                 "WITH roots AS ("
                         + " SELECT id FROM post "
                         + " WHERE thread_id = :thread_id AND parent IS NULL "
-                        + (since != null ? "AND path " + (isDesc ? '<' : '>') + " (SELECT path FROM post WHERE id = :since)" : "")
+                        + (since != null ? "AND root " + (isDesc ? '<' : '>') + " (SELECT root FROM post WHERE id = :since)" : "")
                         + " ORDER BY id " + (isDesc ? "DESC" : "ASC")
                         + (limit != null ? " LIMIT :limit" : "")
                         + ") "
                         + "SELECT P.* FROM post P JOIN roots ON roots.id = P.root "
-                        + "ORDER BY P.path " + (isDesc ? "DESC" : "ASC"),
+                        + "ORDER BY P.root " + (isDesc ? "DESC" : "ASC") + ", P.path",
                 params, POST_MAPPER
         );
     }
