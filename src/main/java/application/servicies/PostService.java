@@ -265,7 +265,7 @@ public class PostService {
     }
 
 
-    // Получение полной информации о сообщении, включая связанные объекты.
+    // Найти сообщение
     public Post findPostById(Long id) throws IncorrectResultSizeDataAccessException {
         final MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);
